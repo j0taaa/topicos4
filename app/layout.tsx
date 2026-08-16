@@ -8,9 +8,9 @@ const libre = Libre_Franklin({ variable: "--font-libre", subsets: ["latin"] });
 const sourceSerif = Source_Serif_4({ variable: "--font-serif", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Cloud por baixo das abstrações",
+  title: "Cloud computing: da virtualização à operação multi-região",
   description:
-    "Seminário avançado sobre cloud, virtualização, containers, Kubernetes, redes, replicação e sistemas distribuídos, com artigos, questões ENADE e discussão.",
+    "Seminário avançado sobre cloud, virtualização, containers, Kubernetes, redes, replicação e sistemas distribuídos, com artigos, questões e discussão.",
   other: { "codex-preview": "development" },
   icons: { icon: "/favicon.svg", shortcut: "/favicon.svg" },
 };

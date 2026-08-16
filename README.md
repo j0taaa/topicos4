@@ -11,7 +11,7 @@ Apresentação web avançada e vendor-neutral sobre a infraestrutura e os sistem
 | Resumo da disciplina | Fundamentos de cloud, virtualização, containers, Kubernetes, redes, replicação, consistência, consenso, CAP, RPO e RTO. |
 | Tópico adicional | Dois slides sobre microVMs, comparando a fronteira de isolamento com containers e VMs tradicionais. |
 | Notícia ou tecnologia atual | Aposentadoria do Ingress-NGINX em março de 2026 e migração para Kubernetes Gateway API. |
-| Quatro questões de prova | Questões 09, 17, 25 e 35 do ENADE 2021, cada uma com tempo para resposta e resolução no slide seguinte. |
+| Quatro questões de prova | Questões 09, 21, 25 e 35 do ENADE 2021, cada uma com tempo para resposta e resolução no slide seguinte. |
 | Evolução por artigos | Mesos (2011), Firecracker (2020) e FaaSNet (2021), cobrindo os três períodos solicitados. |
 | Interatividade | Roda de discussão final com cenário, três posições arquiteturais, regras, tempo de preparação e réplica. |
 | Duração mínima | 70 slides e roteiro estimado em aproximadamente 100 minutos. |
@@ -76,5 +76,5 @@ npm run build
 
 ### Questões
 
-- ENADE 2021 — Bacharelado em Ciência da Computação, questões 09, 17, 25 e 35 e respectivo gabarito oficial.
+- ENADE 2021 — Bacharelado em Ciência da Computação, questões 09, 21, 25 e 35 e respectivo gabarito oficial.
 - A questão 25 possui redação discutível no item sobre nuvem comunitária; o slide explicita a ressalva e segue o gabarito oficial.

@@ -1,0 +1,56 @@
+name: Materialize revised presentation
+
+on:
+  push:
+    branches: [revisao-slide-a-slide]
+    paths:
+      - "scripts/revision_payload.part*"
+      - ".github/workflows/materialize-revision.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    if: github.event.head_commit.message != 'Materialize revised presentation'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract revision payload
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat scripts/revision_payload.part* | tr -d '\n' > /tmp/revision.b64
+          base64 --decode /tmp/revision.b64 > /tmp/revision.tar.gz
+          echo "33b22beb2755e67e2ca6fb552b3b771cec73ab25a4bfd4c24f0d9588df90f8ca  /tmp/revision.tar.gz" | sha256sum --check --strict
+          tar -xzf /tmp/revision.tar.gz -C .
+
+          rm -f \
+            app/academic-content-slides.tsx \
+            app/academic-exam-slides.tsx \
+            app/academic-slide-shell.tsx \
+            app/academic-slides.module.css \
+            app/academic-slides.ts \
+            app/deck.tsx
+
+          rm -f scripts/revision_payload.part*
+          rm -f .github/workflows/materialize-revision.yml
+
+          test -s app/revised-deck.tsx
+          test -s app/revised-deck.module.css
+          test -s REVISAO_SLIDE_A_SLIDE.md
+
+      - name: Commit generated revision
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Materialize revised presentation"
+          git push

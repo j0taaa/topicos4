@@ -2,7 +2,18 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Expand, Eye, Grid3X3, RotateCcw, X } from "lucide-react";
-import { sections, slides } from "./deck";
+import { buildSeminarSlides } from "./academic-slides";
+import { sections as baseSections, slides as coreSlides } from "./deck";
+
+const slides = buildSeminarSlides(coreSlides);
+const sections = baseSections.map((section) => {
+  const indexes = slides.flatMap((slide, index) => slide.section === section.key ? [index] : []);
+  return {
+    ...section,
+    start: indexes[0] + 1,
+    end: indexes[indexes.length - 1] + 1,
+  };
+});
 
 export default function Home() {
   const [index, setIndex] = useState(0);
@@ -66,7 +77,7 @@ export default function Home() {
 
   return <main className="presentation-lab">
     <header className="presentation-header">
-      <div><h1>Cloud por baixo das abstrações</h1><p>60 slides · conteúdo principal ≈ 80 minutos + discussão · vendor-neutral</p></div>
+      <div><h1>Cloud por baixo das abstrações</h1><p>{slides.length} slides · roteiro ≈ 100 minutos · artigos, ENADE e discussão</p></div>
       <div className="header-actions"><button onClick={() => setOverview(true)}><Grid3X3/>Visão geral</button><button onClick={present}><Expand/>Tela cheia</button></div>
     </header>
 
@@ -80,8 +91,8 @@ export default function Home() {
     </nav>
 
     <nav className="section-nav" aria-label="Seções da apresentação">{sections.map((section) => <button key={section.key} onClick={() => goTo(section.start - 1)} className={current.section === section.key ? "active" : ""}><span>{section.label}</span><small>{section.start}–{section.end}</small></button>)}</nav>
-    <footer className="presentation-note"><RotateCcw/><span>Use <b>←</b> e <b>→</b> para avançar. Apenas diagramas em que a ordem importa possuem etapas.</span></footer>
+    <footer className="presentation-note"><RotateCcw/><span>Use <b>←</b> e <b>→</b>. Diagramas progressivos revelam apenas etapas didáticas; questões são resolvidas no slide seguinte.</span></footer>
 
-    {overview && <div className="overview-backdrop" role="dialog" aria-modal="true" aria-label="Visão geral dos slides"><section className="overview-panel"><header><div><h2>Visão geral</h2><p>Selecione um slide para navegar diretamente.</p></div><button onClick={() => setOverview(false)} aria-label="Fechar visão geral"><X/></button></header><div className="overview-grid">{sections.map((section) => <section key={section.key}><h3>{section.label}</h3>{slides.map((slide, slideIndex) => slide.section === section.key && <button key={slide.title} onClick={() => goTo(slideIndex)} className={slideIndex === index ? "active" : ""}><span>{slideIndex + 1}</span><b>{slide.title}</b><small>{slide.duration}</small></button>)}</section>)}</div></section></div>}
+    {overview && <div className="overview-backdrop" role="dialog" aria-modal="true" aria-label="Visão geral dos slides"><section className="overview-panel"><header><div><h2>Visão geral</h2><p>Selecione um slide para navegar diretamente.</p></div><button onClick={() => setOverview(false)} aria-label="Fechar visão geral"><X/></button></header><div className="overview-grid">{sections.map((section) => <section key={section.key}><h3>{section.label}</h3>{slides.map((slide, slideIndex) => slide.section === section.key && <button key={`${slide.title}-${slideIndex}`} onClick={() => goTo(slideIndex)} className={slideIndex === index ? "active" : ""}><span>{slideIndex + 1}</span><b>{slide.title}</b><small>{slide.duration}</small></button>)}</section>)}</div></section></div>}
   </main>;
 }

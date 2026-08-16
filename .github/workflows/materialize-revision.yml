@@ -5,6 +5,7 @@ on:
     branches: [revisao-slide-a-slide]
     paths:
       - "scripts/revision_payload.part*"
+      - "scripts/revision_payload.start*"
       - ".github/workflows/materialize-revision.yml"
 
 permissions:
@@ -25,7 +26,14 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          cat scripts/revision_payload.part* | tr -d '\n' > /tmp/revision.b64
+          cat \
+            scripts/revision_payload.start00 \
+            scripts/revision_payload.start01 \
+            scripts/revision_payload.part01 \
+            scripts/revision_payload.part02 \
+            scripts/revision_payload.part03 \
+            scripts/revision_payload.part04 \
+            | tr -d '\n' > /tmp/revision.b64
           base64 --decode /tmp/revision.b64 > /tmp/revision.tar.gz
           echo "33b22beb2755e67e2ca6fb552b3b771cec73ab25a4bfd4c24f0d9588df90f8ca  /tmp/revision.tar.gz" | sha256sum --check --strict
           tar -xzf /tmp/revision.tar.gz -C .
@@ -39,6 +47,7 @@ jobs:
             app/deck.tsx
 
           rm -f scripts/revision_payload.part*
+          rm -f scripts/revision_payload.start*
           rm -f .github/workflows/materialize-revision.yml
 
           test -s app/revised-deck.tsx

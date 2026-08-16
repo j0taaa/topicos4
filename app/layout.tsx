@@ -10,7 +10,7 @@ const sourceSerif = Source_Serif_4({ variable: "--font-serif", subsets: ["latin"
 export const metadata: Metadata = {
   title: "Cloud por baixo das abstrações",
   description:
-    "Apresentação avançada sobre virtualização, containers, Kubernetes, redes, alta disponibilidade e sistemas distribuídos.",
+    "Seminário avançado sobre cloud, virtualização, containers, Kubernetes, redes, replicação e sistemas distribuídos, com artigos, questões ENADE e discussão.",
   other: { "codex-preview": "development" },
   icons: { icon: "/favicon.svg", shortcut: "/favicon.svg" },
 };

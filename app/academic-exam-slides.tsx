@@ -22,11 +22,11 @@ const examQuestions: ExamQuestion[] = [
     title: "Escalonamento em sistemas operacionais",
     prompt: "Qual associação entre algoritmo de escalonamento e tipo de ambiente está correta?",
     alternatives: [
-      "FILO — propício para sistemas de tempo real.",
-      "Rate Monotonic — propício para sistemas em lote.",
-      "Tarefa mais curta primeiro — propício para sistemas interativos.",
-      "Round-robin — propício para sistemas de tempo real.",
-      "Escalonamento por prioridades — propício para sistemas interativos.",
+      "FILO: propício para sistemas de tempo real.",
+      "Rate Monotonic: propício para sistemas em lote.",
+      "Tarefa mais curta primeiro: propício para sistemas interativos.",
+      "Round-robin: propício para sistemas de tempo real.",
+      "Escalonamento por prioridades: propício para sistemas interativos.",
     ],
     answer: "E",
     answerLabel: "Prioridades em sistemas interativos",
@@ -56,7 +56,7 @@ const examQuestions: ExamQuestion[] = [
       "Repetidores operam na camada física e regeneram sinais; não interpretam sequer um cabeçalho próprio.",
       "Hubs também operam na camada física: transmissões simultâneas colidem, em vez de serem enfileiradas e arbitradas pelo hub.",
       "Bridges usam o endereço MAC no cabeçalho do quadro; não precisam examinar a carga útil para decidir a porta de saída.",
-      "Em uma rede de broadcast, todos os nós compartilham o meio, o que simplifica — e não complica — o problema básico de encaminhamento.",
+      "Em uma rede de broadcast, todos os nós compartilham o meio, o que simplifica, e não complica, o problema básico de encaminhamento.",
       "Um gateway de transporte pode traduzir entre protocolos de transporte distintos, preservando a comunicação entre as extremidades.",
     ],
     connection: "CNI, bridge, roteamento, Service e load balancer atuam em camadas diferentes; confundi-las leva a diagnósticos errados no caminho de uma requisição Kubernetes.",
@@ -130,7 +130,7 @@ function ExamQuestionSlide({ question }: { question: ExamQuestion }) {
             <div key={alternative}><b>{String.fromCharCode(65 + index)}</b><span>{alternative}</span></div>
           ))}
         </div>
-        <SourceNote>Fonte: ENADE 2021 — Bacharelado em Ciência da Computação. Enunciado condensado para projeção; resolução no próximo slide.</SourceNote>
+        <SourceNote>Fonte: ENADE 2021, Bacharelado em Ciência da Computação. Enunciado condensado para projeção; resolução no próximo slide.</SourceNote>
       </div>
     </AcademicSlide>
   );
@@ -174,7 +174,7 @@ function DiscussionSlide() {
           <span><Clock3 /> Dois minutos para argumentos e um para réplica.</span>
           <span><Scale /> Toda defesa deve declarar RPO, RTO, latência e custo.</span>
         </div>
-        <p className={styles.finalPrompt}>Não existe resposta gratuita: qual requisito vocês renegociariam — e por quê?</p>
+        <p className={styles.finalPrompt}>Não existe resposta gratuita: qual requisito vocês renegociariam, e por quê?</p>
       </div>
     </AcademicSlide>
   );

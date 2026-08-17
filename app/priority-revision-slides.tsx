@@ -126,7 +126,6 @@ function SeminarOverviewSlide() {
     <AcademicSlide title="Estrutura do seminário" section="fundamentos">
       <div className={`${styles.body} ${styles.overviewBody}`}>
         <ConceptCards items={cards} columns={3} />
-        <div className={styles.durationBar}><Clock3 /><b>Roteiro de 100 a 110 minutos</b><span>Conteúdo técnico, artigos, quatro questões e discussão final</span></div>
       </div>
     </AcademicSlide>
   );
@@ -135,22 +134,39 @@ function SeminarOverviewSlide() {
 function VmMemoryIoSlide() {
   return (
     <AcademicSlide title="Como uma VM acessa memória e dispositivos" section="virtualizacao">
-      <div className={`${styles.body} ${styles.splitBody}`}>
-        <section className={styles.explainerPanel}>
-          <span className={styles.eyebrow}>CAMINHO PRINCIPAL</span>
-          <Flow items={[
-            { icon: Package, title: "Aplicação", detail: "executa dentro da VM" },
-            { icon: Monitor, title: "Kernel convidado", detail: "gerencia a máquina aparente", tone: "blue" },
-            { icon: Braces, title: "Hypervisor", detail: "traduz e controla acesso", tone: "amber" },
-            { icon: Cpu, title: "Hardware", detail: "CPU, RAM, disco e rede", tone: "neutral" },
-          ]} />
-          <p className={styles.mainStatement}>A VM enxerga um computador completo, mas o hypervisor continua decidindo como seus recursos virtuais usam o hardware físico.</p>
+      <div className={`${styles.body} ${styles.memoryIoBody}`}>
+        <section className={styles.pathPanel}>
+          <header><Cpu /><div><span>MEMÓRIA</span><b>Tradução em dois níveis</b></div></header>
+          <div className={styles.addrChain}>
+            <div><b>Endereço virtual</b><small>visto pelo processo dentro da VM</small></div>
+            <div className={styles.addrHop}>1ª tradução · tabela de páginas do kernel convidado</div>
+            <div><b>Endereço físico do guest</b><small>a memória que a VM acredita possuir</small></div>
+            <div className={styles.addrHop}>2ª tradução · EPT / NPT</div>
+            <div><b>Endereço físico do host</b><small>onde o dado realmente reside</small></div>
+          </div>
+          <div className={styles.pathNote}>
+            <b>O que é EPT/NPT?</b>
+            <span>Uma segunda tabela de páginas, criada pelo hypervisor e percorrida <em>pelo próprio processador</em> (Intel: EPT · AMD: NPT). Sem ela, cada acesso do guest precisaria ser traduzido por software; com ela, a segunda tradução acontece em hardware, quase sem custo extra por acesso.</span>
+          </div>
         </section>
-        <section className={styles.definitionPanel}>
-          <Definition term="EPT/NPT">Tabelas mantidas com apoio do processador para traduzir memória do guest até a memória física do host.</Definition>
-          <Definition term="virtio">Família de dispositivos paravirtualizados que reduz o custo de emular hardware tradicional para disco e rede.</Definition>
-          <Definition term="Ideia central">CPU, memória e I/O percorrem caminhos diferentes. Por isso, o overhead de uma VM não é um único número.</Definition>
+        <section className={`${styles.pathPanel} ${styles.ioPanel}`}>
+          <header><HardDrive /><div><span>ENTRADA E SAÍDA</span><b>Dois modos de acesso ao dispositivo</b></div></header>
+          <div className={styles.ioModes}>
+            <div className={styles.ioMode}>
+              <Monitor />
+              <b>Dispositivo emulado</b>
+              <span>COMPATIBILIDADE</span>
+              <small>O hypervisor intercepta e imita hardware tradicional; qualquer guest funciona, ao custo de mais trocas de contexto e cópias.</small>
+            </div>
+            <div className={styles.ioMode}>
+              <Braces />
+              <b>virtio · paravirtualizado</b>
+              <span>DESEMPENHO</span>
+              <small>O guest sabe que está virtualizado e coopera por filas compartilhadas: menos interceptações no caminho de disco e rede.</small>
+            </div>
+          </div>
         </section>
+        <div className={styles.useCaseRule}><Gauge /><span>CPU, memória e I/O percorrem caminhos diferentes no host. O overhead de uma VM não é um único número: depende do perfil da carga.</span></div>
       </div>
     </AcademicSlide>
   );
@@ -160,17 +176,30 @@ function VmContainerBoundarySlide() {
   return (
     <AcademicSlide title="VMs e containers: fronteiras de isolamento diferentes" section="virtualizacao">
       <div className={`${styles.body} ${styles.compareBody}`}>
-        <section className={styles.stackCard}>
-          <header><Server /><div><span>MÁQUINA VIRTUAL</span><b>Outro kernel</b></div></header>
-          <div className={styles.stack}><i>Aplicação</i><i>Bibliotecas</i><i className={styles.kernelLayer}>Kernel convidado</i><i>Hardware virtual</i><i>Hypervisor</i></div>
-          <p>Permite sistemas operacionais diferentes e oferece uma fronteira forte, mas exige boot e memória para outro kernel.</p>
-        </section>
-        <section className={`${styles.stackCard} ${styles.containerStackCard}`}>
-          <header><Container /><div><span>CONTAINER</span><b>Kernel compartilhado</b></div></header>
-          <div className={styles.stack}><i>Aplicação</i><i>Bibliotecas</i><i className={styles.kernelLayer}>Kernel do host</i><i>Container runtime</i></div>
-          <p>Cria processos isolados rapidamente e com alta densidade, mas amplia o impacto de uma vulnerabilidade no kernel comum.</p>
-        </section>
-        <div className={styles.decisionStrip}><Cloud /><span>Na cloud, containers normalmente rodam dentro de VMs: a VM separa tenants; o container organiza e empacota aplicações.</span></div>
+        <div className={styles.slideIntro}>
+          <p className={styles.lead}>A VM virtualiza a máquina; o container virtualiza o ambiente. Ambos isolam workloads no mesmo hardware, mas desenham a fronteira em lugares diferentes.</p>
+          <p className={styles.supportText}>Na VM, a fronteira inclui um kernel convidado completo: boot de segundos, memória para outro sistema operacional e atualizações próprias, em troca de isolamento forte e kernels distintos por workload. No container, a fronteira é o próprio processo, confinado por mecanismos do kernel do host: sobe em milissegundos e empilha centenas de instâncias por máquina, mas uma vulnerabilidade no kernel compartilhado afeta todos os containers ao mesmo tempo. Na cloud, as técnicas se combinam: containers rodando dentro de VMs, com a VM separando tenants e o container empacotando a aplicação.</p>
+        </div>
+        <div className={styles.compareExtra}>
+          <section className={styles.stackCard}>
+            <header><Server /><div><span>MÁQUINA VIRTUAL</span><b>Outro kernel</b></div></header>
+            <div className={styles.stack}><i>Aplicação</i><i>Bibliotecas</i><i className={styles.kernelLayer}>Kernel convidado</i><i>Hardware virtual</i><i>Hypervisor</i></div>
+            <div className={styles.stackAttrs}>
+              <div><b>Boot</b><span>segundos a minutos</span></div>
+              <div><b>Memória</b><span>SO convidado completo</span></div>
+              <div><b>Fronteira</b><span>kernels independentes</span></div>
+            </div>
+          </section>
+          <section className={`${styles.stackCard} ${styles.containerStackCard}`}>
+            <header><Container /><div><span>CONTAINER</span><b>Kernel compartilhado</b></div></header>
+            <div className={styles.stack}><i>Aplicação</i><i>Bibliotecas</i><i className={styles.kernelLayer}>Kernel do host</i><i>Container runtime</i></div>
+            <div className={styles.stackAttrs}>
+              <div><b>Boot</b><span>milissegundos</span></div>
+              <div><b>Memória</b><span>processo e bibliotecas</span></div>
+              <div><b>Fronteira</b><span>processos no mesmo kernel</span></div>
+            </div>
+          </section>
+        </div>
       </div>
     </AcademicSlide>
   );
@@ -182,12 +211,23 @@ function MicroVmDefinitionSlide() {
     { icon: Lock, label: "MICROVM", title: "VM reduzida", text: "Kernel próprio e poucos dispositivos, criada para subir rapidamente e limitar a superfície de emulação." },
     { icon: Server, label: "VM TRADICIONAL", title: "Máquina completa", text: "Mais compatibilidade e recursos de hardware virtual, com maior custo de memória e inicialização.", tone: "neutral" },
   ];
+  const stats = [
+    { value: "~125 ms", label: "para inicializar uma microVM do zero (Firecracker)" },
+    { value: "~5 MiB", label: "memória adicional por microVM ativa" },
+    { value: "150 000", label: "microVMs simultâneas em um único host, no experimento do paper" },
+  ];
   return (
     <AcademicSlide title="MicroVM: uma VM reduzida para workloads efêmeros" section="virtualizacao">
       <div className={`${styles.body} ${styles.microVmBody}`}>
-        <ConceptCards items={choices} columns={3} />
-        <div className={styles.microVmAnswer}>
-          <ShieldCheck /><div><b>Por que ela existe?</b><p>Containers são leves, mas compartilham o kernel. VMs isolam melhor, mas costumam carregar componentes desnecessários. A microVM mantém a fronteira de virtualização e remove dispositivos e funcionalidades que um workload efêmero não precisa.</p></div>
+        <div className={styles.slideIntro}>
+          <p className={styles.lead}>Uma microVM é uma máquina virtual reduzida ao essencial: kernel próprio, memória e poucos dispositivos, sem BIOS, sem USB e sem placas emuladas.</p>
+          <p className={styles.supportText}>A ideia é manter a fronteira de isolamento por hardware que o container não oferece, descartando tudo que um workload curto e descartável não usa. Os números do Firecracker, o VMM criado pela Amazon para o AWS Lambda e aberto em 2018, mostram o resultado: boot perto do de um container, overhead de memória de poucos mebibytes e densidade de centenas de milhares de instâncias por host.</p>
+        </div>
+        <div className={`${styles.compareExtra} ${styles.microVmChoices}`}>
+          <ConceptCards items={choices} columns={3} />
+        </div>
+        <div className={styles.microVmStats}>
+          {stats.map((stat) => <div key={stat.value}><b>{stat.value}</b><span>{stat.label}</span></div>)}
         </div>
       </div>
     </AcademicSlide>
@@ -198,15 +238,30 @@ function MicroVmUseCasesSlide() {
   return (
     <AcademicSlide title="Quando usar microVMs" section="virtualizacao">
       <div className={`${styles.body} ${styles.useCaseBody}`}>
-        <section className={styles.useCaseColumn}>
-          <header><ShieldCheck /><div><span>FAZ SENTIDO</span><b>O código não é plenamente confiável</b></div></header>
-          <ul><li>Funções serverless de vários clientes</li><li>Sandboxes para executar código enviado por usuários</li><li>Executores de CI compartilhados</li><li>Plataformas multi-tenant com forte isolamento</li></ul>
-        </section>
-        <section className={`${styles.useCaseColumn} ${styles.mutedUseCase}`}>
-          <header><Scale /><div><span>PODE SER EXCESSO</span><b>O ambiente é controlado</b></div></header>
-          <ul><li>Serviços internos de um único tenant</li><li>Workloads longos e estáveis</li><li>Clusters em que densidade é a prioridade</li><li>Equipes sem necessidade operacional clara</li></ul>
-        </section>
-        <div className={styles.useCaseRule}><Gauge /><span>A escolha não é uma disputa entre tecnologias. Ela depende do modelo de ameaça, do tempo de inicialização, da densidade e da complexidade que a equipe aceita operar.</span></div>
+        <div className={styles.slideIntro}>
+          <p className={styles.lead}>A escolha entre container e microVM é uma decisão de modelo de ameaça, não de preferência tecnológica.</p>
+          <p className={styles.supportText}>Quando o código que executa não é plenamente confiável, porque vem de outros tenants, de usuários externos ou de pipelines arbitrários, o isolamento por processo é frágil demais, e uma VM por instância se justifica mesmo custando mais memória. Quando o ambiente é controlado, o código é o mesmo por semanas e a densidade importa, containers oferecem a melhor relação entre custo e segurança suficiente.</p>
+        </div>
+        <div className={styles.compareExtra}>
+          <section className={styles.useCaseColumn}>
+            <header><ShieldCheck /><div><span>FAZ SENTIDO</span><b>O código não é plenamente confiável</b></div></header>
+            <ul>
+              <li><b>Funções serverless de vários clientes</b><span>cada invocação pode vir de um tenant diferente.</span></li>
+              <li><b>Código enviado por usuários</b><span>sandbox exige fronteira de hardware, não de processo.</span></li>
+              <li><b>Executores de CI compartilhados</b><span>pipelines rodam código arbitrário; evita vazamento entre builds.</span></li>
+              <li><b>Plataformas multi-tenant</b><span>fronteira por VM com custo previsível por instância.</span></li>
+            </ul>
+          </section>
+          <section className={`${styles.useCaseColumn} ${styles.mutedUseCase}`}>
+            <header><Scale /><div><span>PODE SER EXCESSO</span><b>O ambiente é controlado</b></div></header>
+            <ul>
+              <li><b>Serviços internos de um único tenant</b><span>código confiável não justifica uma VM por instância.</span></li>
+              <li><b>Workloads longos e estáveis</b><span>tempo de boot importa pouco quando o processo vive por semanas.</span></li>
+              <li><b>Densidade como prioridade</b><span>containers empilham mais instâncias por host.</span></li>
+              <li><b>Operação sem necessidade clara</b><span>cada microVM adiciona kernel, atualização e monitoração.</span></li>
+            </ul>
+          </section>
+        </div>
         <SourceNote>Referência: Agache et al., Firecracker: Lightweight Virtualization for Serverless Applications, NSDI 2020.</SourceNote>
       </div>
     </AcademicSlide>
@@ -224,6 +279,7 @@ function KubernetesProblemSlide() {
     <AcademicSlide title="O problema que o Kubernetes resolve" section="kubernetes">
       <div className={`${styles.body} ${styles.problemBody}`}>
         <p className={styles.lead}>Executar um container é simples. Manter centenas deles distribuídos, atualizados e disponíveis enquanto máquinas falham é o problema de orquestração.</p>
+        <p className={styles.supportText}>Com dez máquinas e cinquenta containers, perguntas operacionais aparecem toda hora: em qual máquina cabe a nova réplica? E se aquela máquina reiniciar? Quem reencaminha o tráfego enquanto o substituto sobe? Como distribuir uma nova versão sem derrubar o serviço? Responder isso com scripts e intervenção manual não escala: cada incidente depende de uma pessoa disponível. Kubernetes transforma essas perguntas em código: a resposta é declarada uma vez, e control loops a aplicam continuamente.</p>
         <ConceptCards items={items} columns={4} />
         <div className={styles.reconcileBar}><RefreshCcw /><span>Kubernetes compara continuamente o estado desejado com o estado observado e executa ações para aproximar os dois.</span></div>
       </div>
@@ -242,6 +298,10 @@ function KubernetesBasicsSlide() {
   return (
     <AcademicSlide title="Cinco conceitos básicos do Kubernetes" section="kubernetes">
       <div className={`${styles.body} ${styles.basicsBody}`}>
+        <div className={styles.slideIntro}>
+          <p className={styles.lead}>Toda a conversa sobre Kubernetes gira em torno de cinco palavras.</p>
+          <p className={styles.supportText}>Cluster é o conjunto inteiro: as máquinas de trabalho (Nodes) mais a camada de controle. O Pod é a menor unidade que o Kubernetes cria e destrói: um ou mais containers que sobem juntos, dividem rede e morrem juntos. Ninguém executa um Pod diretamente em produção: declara-se um Deployment, que diz qual versão e quantas réplicas devem existir. Como Pods nascem e morrem com IPs novos, o Service oferece o nome e o endereço estáveis que os clientes usam. Os próximos slides mostram esses objetos conversando.</p>
+        </div>
         <ConceptCards items={basics} columns={5} />
         <div className={styles.relationLine}><GitBranch /><span>Deployment cria e substitui Pods; Pods rodam em Nodes; Service mantém um endereço estável para os Pods selecionados.</span></div>
       </div>
@@ -250,21 +310,35 @@ function KubernetesBasicsSlide() {
 }
 
 function ManifestToPodSlide() {
+  const steps = [
+    { icon: Package, title: "Manifesto", detail: "O usuário envia um YAML declarando um Deployment com 3 réplicas." },
+    { icon: Cloud, title: "API server", detail: "Autentica a requisição, valida o objeto e o registra.", tone: "blue" },
+    { icon: Database, title: "etcd", detail: "Guarda o estado desejado de forma persistente e consistente.", tone: "neutral" },
+    { icon: Search, title: "Scheduler", detail: "Observa Pods sem Node, filtra candidatos e escolhe uma máquina para cada um.", tone: "amber" },
+    { icon: Server, title: "kubelet", detail: "Agente do Node vê o Pod atribuído a ele e converge a máquina.", tone: "blue" },
+    { icon: Container, title: "Pod", detail: "O runtime sobe os containers, que passam a ser supervisionados como processos.", tone: "green" },
+  ] as Array<{ icon: LucideIcon; title: string; detail: string; tone?: Tone }>;
   return (
     <AcademicSlide title="Do manifesto ao Pod" section="kubernetes">
       <div className={`${styles.body} ${styles.pipelineBody}`}>
-        <Flow compact items={[
-          { icon: Package, title: "Manifesto", detail: "Deployment com 3 réplicas" },
-          { icon: Cloud, title: "API server", detail: "valida e registra", tone: "blue" },
-          { icon: Database, title: "etcd", detail: "armazena o estado do cluster", tone: "neutral" },
-          { icon: Search, title: "Scheduler", detail: "escolhe um Node", tone: "amber" },
-          { icon: Server, title: "kubelet", detail: "converge o Node", tone: "blue" },
-          { icon: Container, title: "Pod", detail: "containers em execução" },
-        ]} />
-        <div className={styles.pipelineNotes}>
-          <Definition term="Declarativo">O usuário descreve o resultado desejado, não uma sequência fixa de comandos.</Definition>
-          <Definition term="Assíncrono">A API pode aceitar o objeto antes de o Pod existir. Controllers e agentes completam o trabalho depois.</Definition>
-          <Definition term="Reconciliação">Se o Pod desaparecer, o sistema detecta a diferença e cria outro.</Definition>
+        <p className={styles.supportText}>Quando alguém aplica um manifesto, nenhum componente comanda os outros: o API Server valida e registra o pedido, o estado desejado fica persistido no etcd, e cada peça restante observa a API e reage à sua maneira. O scheduler decide em qual Node cada Pod deve rodar; o kubelet daquele Node, vendo o Pod atribuído a si, pede ao runtime que suba os containers. O usuário não acompanha esses passos: ele declara o resultado e o cluster converge.</p>
+        <div className={styles.pipelineLayout}>
+          <ol className={styles.pipelineSteps}>
+            {steps.map(({ icon: Icon, title, detail, tone = "green" }, index) => (
+              <li key={title} className={styles[tone]}>
+                <span>{index + 1}</span>
+                <Icon />
+                <b>{title}</b>
+                <small>{detail}</small>
+              </li>
+            ))}
+          </ol>
+          <aside className={styles.pipelineNotes}>
+            <Definition term="Declarativo">O usuário descreve o resultado desejado, não uma sequência fixa de comandos.</Definition>
+            <Definition term="Assíncrono">A API pode aceitar o objeto antes de o Pod existir. Controllers e agentes completam o trabalho depois.</Definition>
+            <Definition term="Reconciliação">Se o Pod desaparecer, o sistema detecta a diferença e cria outro.</Definition>
+            <div className={styles.useCaseRule}><Zap /><span>Nenhum componente conhece o caminho completo: cada um observa a API, faz a sua parte e registra o resultado.</span></div>
+          </aside>
         </div>
       </div>
     </AcademicSlide>
@@ -281,6 +355,10 @@ function ControlPlaneSlide() {
   return (
     <AcademicSlide title="O control plane mantém o estado desejado" section="kubernetes">
       <div className={`${styles.body} ${styles.controlPlaneBody}`}>
+        <div className={styles.slideIntro}>
+          <p className={styles.lead}>O control plane é o cérebro do cluster: ele não executa containers, apenas decide e registra.</p>
+          <p className={styles.supportText}>Todos os componentes se comunicam pela API do API Server, nunca por conexões diretas entre si. O API Server valida cada requisição e grava o estado no etcd; os controllers observam esse estado e agem quando algo difere do declarado; o scheduler apenas decide, para cada Pod sem Node, onde ele deve rodar. Cada peça tem uma responsabilidade estreita, o que permite executar várias cópias de cada componente em máquinas diferentes para tolerar falhas.</p>
+        </div>
         <ConceptCards items={controlPlane} columns={4} />
         <div className={styles.controlPlaneRule}><Lock /><span>O etcd não executa containers e o scheduler não os inicia. Cada componente possui uma responsabilidade estreita e se comunica por meio da API.</span></div>
       </div>
@@ -292,16 +370,27 @@ function NodeComponentsSlide() {
   return (
     <AcademicSlide title="O que roda em cada Node" section="kubernetes">
       <div className={`${styles.body} ${styles.nodeBody}`}>
+        <section className={styles.nodeExplanation}>
+          <p className={styles.lead}>O control plane escolhe o Node; os agentes locais transformam essa decisão em processos funcionando.</p>
+          <p className={styles.nodeSummary}>Um Node não decide onde um Pod deve ir. Ele recebe a atribuição pela API, prepara os recursos, inicia os containers e informa continuamente se continuam saudáveis.</p>
+          <div className={styles.nodeResponsibilities}>
+            <section><Activity /><div><b>Kubelet</b><span>Compara o estado dos Pods atribuídos com o que está rodando, inicia ou reinicia processos e publica o status.</span></div></section>
+            <section><Container /><div><b>Container runtime</b><span>Baixa imagens e cria processos isolados, como containerd ou CRI-O.</span></div></section>
+            <section><Network /><div><b>Rede do Node</b><span>O plugin CNI cria interfaces, rotas e conectividade para cada Pod.</span></div></section>
+          </div>
+          <div className={styles.nodeNote}><ShieldCheck /><span>Se o Node desaparece, o control plane marca seus Pods como indisponíveis e tenta criá-los em outro Node.</span></div>
+        </section>
         <section className={styles.nodeMachine}>
-          <header><Server /><div><span>NODE</span><b>VM ou servidor de trabalho</b></div></header>
+          <header><Server /><div><span>NODE DE TRABALHO</span><b>Onde o Pod é executado</b></div></header>
           <div className={styles.nodeLayers}>
             <section><Package /><div><b>Pods</b><small>workloads agendados para esta máquina</small></div></section>
+            <section className={styles.nodeKubeletLayer}><Activity /><div><b>Kubelet</b><small>converge os Pods e publica o estado</small></div></section>
             <section><Container /><div><b>Container runtime</b><small>cria e supervisiona containers por meio da CRI</small></div></section>
             <section><Network /><div><b>Rede do Node</b><small>CNI, rotas, interfaces e regras de encaminhamento</small></div></section>
             <section><Cpu /><div><b>Sistema operacional</b><small>kernel, CPU, memória e dispositivos</small></div></section>
           </div>
         </section>
-        <section className={styles.kubeletPanel}><Activity /><div><span>KUBELET</span><b>Agente local</b><p>Observa os Pods atribuídos ao Node, conversa com o runtime, monta volumes, executa probes e publica o estado da máquina para a API.</p></div></section>
+        <section className={styles.kubeletPanel}><Activity /><div><span>KUBELET</span><b>O agente local fecha o ciclo</b><p>Observa os Pods atribuídos ao Node, conversa com o runtime, monta volumes, executa probes e publica o estado da máquina para a API.</p></div></section>
       </div>
     </AcademicSlide>
   );
@@ -310,19 +399,24 @@ function NodeComponentsSlide() {
 function PodNetworkSlide() {
   return (
     <AcademicSlide title="Como um Pod entra na rede" section="rede">
-      <div className={`${styles.body} ${styles.podNetworkBody}`}>
-        <Flow compact items={[
-          { icon: Package, title: "Pod criado", detail: "recebe uma sandbox" },
-          { icon: Network, title: "Network namespace", detail: "interfaces e rotas próprias", tone: "blue" },
-          { icon: Braces, title: "Plugin CNI", detail: "configura conectividade", tone: "amber" },
-          { icon: Server, title: "Rede do Node", detail: "encaminha tráfego" },
-          { icon: Cloud, title: "Fabric do cluster", detail: "liga Nodes e subnets", tone: "neutral" },
-        ]} />
-        <div className={styles.networkDefinitions}>
-          <Definition term="CNI">Especificação e conjunto de plugins usados pelo runtime para adicionar ou remover uma interface da rede de uma sandbox.</Definition>
-          <Definition term="Fabric">Infraestrutura de encaminhamento formada por links, switches, overlays, rotas ou eBPF. Não é um componente único do Kubernetes.</Definition>
-          <Definition term="Resultado">Cada Pod recebe um IP alcançável conforme o modelo de rede implementado pelo cluster.</Definition>
-        </div>
+      <div className={`${styles.body} ${styles.classicSplit}`}>
+        <ul className="bullet-list">
+          <li>Um Pod não nasce conectado ao cluster. Ele recebe uma sandbox de rede própria, separada da máquina e dos demais Pods.</li>
+          <li>Os containers que vivem dentro do mesmo Pod compartilham interfaces, rotas e portas. Por isso, podem conversar por <code>localhost</code>, mas não devem assumir que o IP do Pod será permanente.</li>
+          <li>O runtime pede ao plugin CNI que conecte a sandbox à rede do Node. O plugin cria a interface virtual, instala as rotas e aplica o modelo de conectividade escolhido pelo cluster. O resultado é um IP alcançável, não uma identidade durável.</li>
+        </ul>
+        <section className={`visual-panel ${styles.classicVisual}`}>
+          <div className={styles.verticalPath}>
+            <section><Package /><div><b>Pod criado</b><small>recebe uma sandbox de rede</small></div></section>
+            <ArrowRight className={styles.verticalArrow} />
+            <section className={styles.bluePath}><Network /><div><b>Network namespace</b><small>interfaces, rotas e portas próprias</small></div></section>
+            <ArrowRight className={styles.verticalArrow} />
+            <section className={styles.amberPath}><Braces /><div><b>Plugin CNI</b><small>configura a interface e as rotas</small></div></section>
+            <ArrowRight className={styles.verticalArrow} />
+            <section><Server /><div><b>Rede do Node</b><small>encaminha para o fabric do cluster</small></div></section>
+          </div>
+          <div className={styles.visualNote}><b>Contrato de rede</b><span>O Pod tem conectividade própria, mas seu endereço pode mudar quando ele for recriado.</span></div>
+        </section>
       </div>
     </AcademicSlide>
   );
@@ -331,39 +425,53 @@ function PodNetworkSlide() {
 function ServiceEndpointSliceSlide() {
   return (
     <AcademicSlide title="Service e EndpointSlice separam nome estável de Pods efêmeros" section="rede">
-      <div className={`${styles.body} ${styles.serviceBody}`}>
-        <section className={styles.serviceStable}><Network /><span>SERVICE</span><b>api.default.svc</b><code>10.96.14.20:80</code><p>Nome e endereço lógico permanecem estáveis para os clientes.</p></section>
-        <ArrowRight className={styles.serviceArrow} />
-        <section className={styles.endpointPanel}>
-          <header><GitBranch /><div><span>ENDPOINTSLICE</span><b>Lista atual de backends</b></div></header>
-          <div><i className={styles.readyDot}/><code>10.244.1.8:8080</code><small>ready</small></div>
-          <div><i className={styles.readyDot}/><code>10.244.2.4:8080</code><small>ready</small></div>
-          <div className={styles.terminatingEndpoint}><i/><code>10.244.3.7:8080</code><small>terminating</small></div>
+      <div className={`${styles.body} ${styles.classicSplit}`}>
+        <ul className="bullet-list">
+          <li>O IP de um Pod é um detalhe temporário da execução. Se a instância morrer ou for movida para outro Node, o endereço muda.</li>
+          <li>O cliente, porém, precisa continuar usando um nome que não dependa do ciclo de vida de cada réplica. O Service fornece esse nome e um endereço lógico estável para descoberta e conexão.</li>
+          <li>O EndpointSlice mantém a lista dos Pods elegíveis naquele momento. Endpoints que perderam readiness saem da lista; substitutos entram quando estão prontos. A aplicação continua falando com o Service, não com os IPs individuais.</li>
+        </ul>
+        <section className={`visual-panel ${styles.classicVisual}`}>
+          <div className={styles.serviceVisual}>
+            <section className={styles.serviceStable}><Network /><span>SERVICE</span><b>api.default.svc</b><code>10.96.14.20:80</code><p>nome estável</p></section>
+            <ArrowRight className={styles.serviceArrow} />
+            <section className={styles.endpointPanel}>
+              <header><GitBranch /><div><span>ENDPOINTSLICE</span><b>backends atuais</b></div></header>
+              <div><i className={styles.readyDot}/><code>10.244.1.8:8080</code><small>ready</small></div>
+              <div><i className={styles.readyDot}/><code>10.244.2.4:8080</code><small>ready</small></div>
+              <div className={styles.terminatingEndpoint}><i/><code>10.244.3.7:8080</code><small>terminating</small></div>
+            </section>
+          </div>
+          <div className={styles.visualNote}><RefreshCcw /><span>O control plane atualiza a lista; a rede encaminha apenas para os backends elegíveis.</span></div>
         </section>
-        <div className={styles.serviceRule}><RefreshCcw /><span>O control plane atualiza EndpointSlices quando Pods aparecem, ficam prontos ou terminam. Componentes de rede usam essa informação para encaminhar apenas aos backends elegíveis.</span></div>
       </div>
     </AcademicSlide>
   );
 }
 
 function RequestPathSlide() {
+  const hops: Array<[LucideIcon, string, string]> = [
+    [UserRound, "Cliente", "DNS e conexão"],
+    [Cloud, "Load balancer", "entrada da VPC"],
+    [Route, "Gateway", "host, path e políticas"],
+    [Network, "Service", "destino lógico"],
+    [GitBranch, "EndpointSlice", "backend saudável"],
+    [Package, "Pod", "aplicação responde"],
+  ];
   return (
     <AcademicSlide title="Caminho completo de uma requisição" section="rede">
-      <div className={`${styles.body} ${styles.requestBody}`}>
-        <Flow compact items={[
-          { icon: UserRound, title: "Cliente", detail: "DNS e conexão" },
-          { icon: Cloud, title: "Load balancer", detail: "entrada da VPC", tone: "neutral" },
-          { icon: Route, title: "Gateway", detail: "host, path e políticas", tone: "blue" },
-          { icon: Network, title: "Service", detail: "destino lógico", tone: "amber" },
-          { icon: GitBranch, title: "EndpointSlice", detail: "backend saudável", tone: "blue" },
-          { icon: Package, title: "Pod", detail: "aplicação responde" },
-        ]} />
-        <div className={styles.pathResponsibilities}>
-          <section><b>L4</b><span>IP, porta, conexão e balanceamento de transporte.</span></section>
-          <section><b>L7</b><span>Host, caminho HTTP, TLS, headers e regras de aplicação.</span></section>
-          <section><b>Saúde</b><span>Readiness retira Pods do conjunto antes de direcionar novos tráfegos.</span></section>
-          <section><b>Diagnóstico</b><span>Um Pod Ready não garante que DNS, Gateway, Service ou load balancer estejam corretos.</span></section>
-        </div>
+      <div className={`${styles.body} ${styles.classicSplit}`}>
+        <ul className="bullet-list">
+          <li>Uma requisição externa atravessa várias camadas antes de chegar ao processo. Cada camada tem uma responsabilidade e uma chance própria de falhar.</li>
+          <li>O load balancer fornece a entrada da rede; o Gateway interpreta host, caminho, TLS e políticas; o Service traduz um nome estável em backends; o EndpointSlice informa quais Pods estão elegíveis.</li>
+          <li>Por isso, “o Pod está saudável” é apenas uma parte do diagnóstico. DNS, balanceador, Gateway, Service, readiness e aplicação possuem estados diferentes e intervalos próprios de detecção.</li>
+        </ul>
+        <section className={`visual-panel ${styles.classicVisual}`}>
+          <div className={styles.verticalPath}>
+            {hops.map(([Icon, title, detail], index) => <div key={title} className={styles.pathStepGroup}><section><span>{index + 1}</span><Icon /><div><b>{title}</b><small>{detail}</small></div></section>{index < hops.length - 1 && <ArrowRight className={styles.verticalArrow}/>}</div>)}
+          </div>
+          <div className={styles.visualNote}><b>Diagnóstico</b><span>Um erro no caminho pode parecer uma falha da aplicação, mesmo quando o processo está respondendo.</span></div>
+        </section>
       </div>
     </AcademicSlide>
   );
@@ -378,10 +486,17 @@ function VpcSlide() {
   ];
   return (
     <AcademicSlide title="VPC, subnets e rotas formam a rede da cloud" section="rede">
-      <div className={`${styles.body} ${styles.vpcBody}`}>
-        <ConceptCards items={items} columns={4} />
-        <div className={styles.providerRow}><span>AWS VPC</span><span>Azure VNet</span><span>Google Cloud VPC</span><span>Huawei Cloud VPC</span></div>
-        <p className={styles.providerNote}>Os nomes e detalhes variam, mas o contrato central é semelhante: endereçamento privado, segmentação, roteamento e controle de acesso definidos por software.</p>
+      <div className={`${styles.body} ${styles.classicSplit}`}>
+        <ul className="bullet-list">
+          <li>Uma VPC é um domínio lógico de rede criado por software sobre a infraestrutura do provedor.</li>
+          <li>Ela define quais endereços podem existir, como subnets se conectam e quais fluxos são permitidos, sem criar uma rede física exclusiva para cada cliente. A separação é administrativa e lógica, não uma promessa de hardware dedicado.</li>
+          <li>Subnets organizam endereços por zona ou função; tabelas de rotas escolhem o próximo salto; firewalls e grupos de segurança filtram o tráfego. Ter uma rota até o destino não significa ter permissão para usá-la.</li>
+        </ul>
+        <section className={`visual-panel ${styles.classicVisual} ${styles.vpcVisual}`}>
+          <ConceptCards items={items} columns={2} />
+          <div className={styles.providerRow}><span>AWS VPC</span><span>Azure VNet</span><span>Google Cloud VPC</span><span>Huawei Cloud VPC</span></div>
+          <p className={styles.providerNote}>O nome varia por provedor; o contrato central permanece: endereçamento, segmentação, roteamento e controle de acesso.</p>
+        </section>
       </div>
     </AcademicSlide>
   );
@@ -449,8 +564,8 @@ function PaperSlide({ paper }: { paper: Paper }) {
     <AcademicSlide title={`${paper.year}: ${paper.title}`} section="kubernetes">
       <div className={`${styles.body} ${styles.paperBody}`}>
         <section className={styles.paperIdentity}><span>{paper.period}</span><Icon /><strong>{paper.year}</strong><b>{paper.venue}</b></section>
+        <p className={styles.paperLead}>{paper.problem}</p>
         <div className={styles.paperDetails}>
-          <Definition term="Problema">{paper.problem}</Definition>
           <Definition term="Proposta">{paper.proposal}</Definition>
           <Definition term="Resultado">{paper.result}</Definition>
           <Definition term="Limitação">{paper.limitation}</Definition>
@@ -466,6 +581,10 @@ function ArticleSynthesisSlide() {
   return (
     <AcademicSlide title="Evolução dos artigos: da alocação ao provisionamento em massa" section="kubernetes">
       <div className={`${styles.body} ${styles.articleSynthesisBody}`}>
+        <div className={styles.articleSynthesisIntro}>
+          <p className={styles.lead}>Os três artigos atacam gargalos diferentes da mesma pergunta: como transformar infraestrutura compartilhada em execução rápida, isolada e escalável?</p>
+          <p className={styles.supportText}>Mesos separa a decisão global de recursos das decisões de cada framework. Firecracker reduz a unidade de isolamento para que workloads efêmeros possam subir com segurança. FaaSNet trata o caminho de distribuição das imagens, que se torna o gargalo quando milhares de runtimes precisam iniciar juntos. A evolução não elimina as camadas anteriores; acrescenta mecanismos onde a escala revela um novo limite.</p>
+        </div>
         <Flow items={[
           { icon: Boxes, title: "2011: compartilhar", detail: "múltiplos frameworks em um cluster" },
           { icon: Lock, title: "2020: isolar", detail: "microVMs para workloads multi-tenant", tone: "blue" },
@@ -484,15 +603,21 @@ function ArticleSynthesisSlide() {
 function IngressRetirementSlide() {
   return (
     <AcademicSlide title="Tecnologia atual: Ingress-NGINX foi aposentado em 2026" section="rede">
-      <div className={`${styles.body} ${styles.retirementBody}`}>
-        <div className={styles.retirementDate}><TriangleAlert /><span>24 MAR 2026</span><b>Fim do suporte oficial</b></div>
-        <div className={styles.retirementPoints}>
-          <Definition term="O que terminou">Não há novos releases, correções de bugs nem atualizações para vulnerabilidades descobertas depois da aposentadoria.</Definition>
-          <Definition term="O que continua">Deployments existentes e artefatos publicados podem continuar funcionando, mas ficam sem manutenção upstream.</Definition>
-          <Definition term="Por que a migração exige cuidado">Ingress-NGINX acumulou annotations, defaults e comportamentos específicos. Uma conversão sintaticamente correta ainda pode alterar o tráfego.</Definition>
-        </div>
-        <div className={styles.retirementAction}><Route /><span>Inventariar recursos, annotations, ConfigMaps, TLS, timeouts e regras de rewrite antes de escolher Gateway API ou outro controller mantido.</span></div>
-        <SourceNote>Fontes: Kubernetes Blog, anúncio de aposentadoria de novembro de 2025 e confirmação em 24 de março de 2026.</SourceNote>
+      <div className={`${styles.body} ${styles.classicSplit}`}>
+        <ul className="bullet-list">
+          <li>A aposentadoria do Ingress-NGINX não desliga automaticamente os controladores já instalados, mas encerra a manutenção upstream.</li>
+          <li>A partir desse ponto, novas vulnerabilidades, bugs e incompatibilidades deixam de ter uma correção oficial garantida. Um deployment existente pode continuar funcionando, mas passa a carregar um risco operacional crescente.</li>
+          <li>Migrar não é apenas trocar a palavra Ingress por Gateway. Annotations, defaults, TLS, timeouts e regras de rewrite podem carregar semântica específica do controller antigo. Recursos e tráfego precisam ser inventariados e testados antes da mudança.</li>
+        </ul>
+        <section className={`visual-panel ${styles.classicVisual} ${styles.retirementVisual}`}>
+          <div className={styles.retirementDate}><TriangleAlert /><span>24 MAR 2026</span><b>Fim do suporte oficial</b></div>
+          <div className={styles.retirementPoints}>
+            <Definition term="O que terminou">Novos releases, correções de bugs e atualizações para vulnerabilidades futuras.</Definition>
+            <Definition term="O que continua">Deployments existentes podem continuar funcionando, sem manutenção upstream.</Definition>
+          </div>
+          <div className={styles.retirementAction}><Route /><span>Inventariar annotations, ConfigMaps, TLS, timeouts e rewrite antes de escolher um controller mantido.</span></div>
+          <SourceNote>Fontes: Kubernetes Blog e confirmação de 24 de março de 2026.</SourceNote>
+        </section>
       </div>
     </AcademicSlide>
   );
@@ -501,19 +626,25 @@ function IngressRetirementSlide() {
 function GatewayApiSlide() {
   return (
     <AcademicSlide title="Gateway API separa infraestrutura e regras da aplicação" section="rede">
-      <div className={`${styles.body} ${styles.gatewayBody}`}>
-        <Flow items={[
-          { icon: Braces, title: "GatewayClass", detail: "controller e capacidades" },
-          { icon: Cloud, title: "Gateway", detail: "listeners e infraestrutura", tone: "blue" },
-          { icon: Route, title: "HTTPRoute", detail: "hosts, paths e backends", tone: "amber" },
-          { icon: Network, title: "Service", detail: "destino da aplicação", tone: "neutral" },
-        ]} />
-        <div className={styles.gatewayRoles}>
-          <section><span>PLATAFORMA</span><b>Seleciona a implementação e publica Gateways</b><p>Controla endereços, listeners, certificados e políticas compartilhadas.</p></section>
-          <section><span>APLICAÇÃO</span><b>Declara rotas para seus Services</b><p>Configura hosts, paths, filtros e backends dentro dos limites autorizados.</p></section>
-          <section><span>MIGRAÇÃO</span><b>Ingress2Gateway auxilia, mas não decide semântica</b><p>A ferramenta converte padrões comuns; extensões específicas ainda exigem revisão e testes.</p></section>
-        </div>
-        <SourceNote>Fontes: documentação oficial do Gateway API e anúncio do Ingress2Gateway 1.0, março de 2026.</SourceNote>
+      <div className={`${styles.body} ${styles.classicSplit}`}>
+        <ul className="bullet-list">
+          <li>Gateway API divide a configuração em objetos com responsabilidades diferentes, em vez de concentrar tudo em um Ingress cheio de annotations.</li>
+          <li>A equipe da plataforma controla a infraestrutura e as capacidades expostas. A equipe da aplicação declara apenas as rotas que está autorizada a usar, como hosts, caminhos e Services de destino.</li>
+          <li>A separação melhora o contrato entre as equipes, mas não elimina diferenças entre controllers. Listeners, filtros, TLS e políticas precisam ser testados na implementação escolhida, especialmente durante a migração.</li>
+        </ul>
+        <section className={`visual-panel ${styles.classicVisual} ${styles.gatewayVisual}`}>
+          <div className={styles.verticalPath}>
+            <section><Braces /><div><b>GatewayClass</b><small>controller e capacidades</small></div></section>
+            <ArrowRight className={styles.verticalArrow} />
+            <section className={styles.bluePath}><Cloud /><div><b>Gateway</b><small>listeners e infraestrutura</small></div></section>
+            <ArrowRight className={styles.verticalArrow} />
+            <section className={styles.amberPath}><Route /><div><b>HTTPRoute</b><small>hosts, paths e backends</small></div></section>
+            <ArrowRight className={styles.verticalArrow} />
+            <section><Network /><div><b>Service</b><small>destino da aplicação</small></div></section>
+          </div>
+          <div className={styles.gatewayRoles}><section><span>PLATAFORMA</span><p>publica Gateways e capacidades</p></section><section><span>APLICAÇÃO</span><p>declara rotas para Services</p></section></div>
+          <SourceNote>Fontes: documentação oficial do Gateway API e Ingress2Gateway 1.0.</SourceNote>
+        </section>
       </div>
     </AcademicSlide>
   );
@@ -522,18 +653,24 @@ function GatewayApiSlide() {
 function WalSlide() {
   return (
     <AcademicSlide title="WAL: o registro das mudanças antes das páginas de dados" section="replicacao">
-      <div className={`${styles.body} ${styles.walBody}`}>
-        <Flow items={[
-          { icon: Package, title: "Transação", detail: "altera dados em memória" },
-          { icon: FileClock, title: "Registro no WAL", detail: "descreve a mudança", tone: "blue" },
-          { icon: HardDrive, title: "Flush do WAL", detail: "torna o log durável", tone: "amber" },
-          { icon: Database, title: "Páginas de dados", detail: "podem ser gravadas depois", tone: "neutral" },
-        ]} />
-        <div className={styles.walExplanation}>
-          <Definition term="WAL">Write-Ahead Log. A regra é registrar a mudança de forma durável antes de depender da página de dados alterada.</Definition>
-          <Definition term="Recuperação">Após uma falha, o banco reproduz registros confirmados para reconstruir um estado consistente.</Definition>
-          <Definition term="Replicação">Enviar WAL permite que outra instância receba a mesma sequência de mudanças.</Definition>
-        </div>
+      <div className={`${styles.body} ${styles.classicSplit}`}>
+        <ul className="bullet-list">
+          <li>O banco não precisa gravar a página inteira de dados a cada transação. Primeiro registra no <strong>Write-Ahead Log</strong> o que mudou, em uma sequência ordenada de registros.</li>
+          <li>Quando o registro do WAL chega a armazenamento durável, o banco consegue confirmar a escrita mesmo que a página de dados ainda esteja apenas na memória. A página pode ser atualizada depois, em outro momento.</li>
+          <li>Depois de uma falha, o banco lê o WAL e reaplica as mudanças confirmadas. Enviar essa mesma sequência para outra instância também é a base da replicação.</li>
+        </ul>
+        <section className={`visual-panel ${styles.classicVisual}`}>
+          <div className={styles.verticalPath}>
+            <section><Package /><div><b>Transação</b><small>altera dados em memória</small></div></section>
+            <ArrowRight className={styles.verticalArrow} />
+            <section className={styles.bluePath}><FileClock /><div><b>Registro no WAL</b><small>descreve a mudança</small></div></section>
+            <ArrowRight className={styles.verticalArrow} />
+            <section className={styles.amberPath}><HardDrive /><div><b>Flush do WAL</b><small>torna o log durável</small></div></section>
+            <ArrowRight className={styles.verticalArrow} />
+            <section><Database /><div><b>Páginas de dados</b><small>podem ser gravadas depois</small></div></section>
+          </div>
+          <div className={styles.visualNote}><b>Regra do WAL</b><span>A mudança precisa estar durável antes de o banco depender da página de dados alterada.</span></div>
+        </section>
       </div>
     </AcademicSlide>
   );
@@ -542,15 +679,24 @@ function WalSlide() {
 function ReceivePersistApplySlide() {
   return (
     <AcademicSlide title="Receber, persistir e aplicar são etapas diferentes" section="replicacao">
-      <div className={`${styles.body} ${styles.replicationStagesBody}`}>
-        <section className={styles.primaryBox}><Database /><span>PRIMARY</span><b>gera WAL</b></section>
-        <ArrowRight />
-        <section className={styles.replicationStage}><Network /><span>1</span><b>Receber</b><p>Os bytes chegaram à memória ou ao buffer da réplica.</p></section>
-        <ArrowRight />
-        <section className={styles.replicationStage}><HardDrive /><span>2</span><b>Persistir</b><p>O log foi gravado em armazenamento durável.</p></section>
-        <ArrowRight />
-        <section className={styles.replicationStage}><RefreshCcw /><span>3</span><b>Aplicar</b><p>A réplica reproduziu o log e atualizou seu estado visível.</p></section>
-        <div className={styles.replicationWarning}><TriangleAlert /><span>Um ACK pode representar qualquer uma dessas fronteiras. Sem conhecer a configuração, “a réplica confirmou” é uma frase ambígua.</span></div>
+      <div className={`${styles.body} ${styles.classicSplit}`}>
+        <ul className="bullet-list">
+          <li>Uma réplica pode ter recebido os bytes do WAL sem que eles sejam duráveis. Nesse ponto, uma queda do processo ou da máquina ainda pode apagar o trecho recebido.</li>
+          <li>Persistir significa gravar o log em armazenamento que sobreviva ao processo. Aplicar é outra operação: a réplica reproduz o log e atualiza o estado que as leituras conseguem observar.</li>
+          <li>Por isso, “a réplica confirmou” é uma frase incompleta. O significado do ACK depende de qual fronteira foi alcançada: memória, armazenamento durável ou estado aplicado.</li>
+        </ul>
+        <section className={`visual-panel ${styles.classicVisual}`}>
+          <div className={styles.verticalPath}>
+            <section><Database /><div><b>Primary</b><small>gera e envia o WAL</small></div></section>
+            <ArrowRight className={styles.verticalArrow} />
+            <section className={styles.bluePath}><Network /><div><b>1. Receber</b><small>bytes chegam ao buffer</small></div></section>
+            <ArrowRight className={styles.verticalArrow} />
+            <section className={styles.amberPath}><HardDrive /><div><b>2. Persistir</b><small>log gravado de forma durável</small></div></section>
+            <ArrowRight className={styles.verticalArrow} />
+            <section><RefreshCcw /><div><b>3. Aplicar</b><small>estado visível é atualizado</small></div></section>
+          </div>
+          <div className={styles.visualNote}><TriangleAlert /><span>O ACK precisa declarar até qual etapa remota ele garante.</span></div>
+        </section>
       </div>
     </AcademicSlide>
   );
@@ -559,19 +705,26 @@ function ReceivePersistApplySlide() {
 function SyncAckSlide() {
   return (
     <AcademicSlide title="O que o ACK garante na replicação síncrona" section="replicacao">
-      <div className={`${styles.body} ${styles.ackBody}`}>
-        <Flow items={[
-          { icon: Package, title: "Cliente", detail: "envia COMMIT" },
-          { icon: Database, title: "Primary", detail: "persiste localmente", tone: "blue" },
-          { icon: Network, title: "Réplica", detail: "recebe e faz remote flush", tone: "amber" },
-          { icon: Check, title: "ACK", detail: "confirma a fronteira configurada" },
-          { icon: UserRound, title: "Resposta", detail: "commit concluído", tone: "neutral" },
-        ]} />
-        <div className={styles.ackTradeoffs}>
-          <Definition term="Vantagem">Se a confirmação exige persistência em outra zona, a perda do primary não elimina a única cópia durável do commit.</Definition>
-          <Definition term="Custo">A latência de escrita inclui rede, fila e armazenamento remoto. Se a réplica necessária estiver indisponível, o commit pode bloquear ou falhar.</Definition>
-          <Definition term="Pergunta correta">Qual réplica participa do ACK e qual etapa ela precisa concluir antes de responder?</Definition>
-        </div>
+      <div className={`${styles.body} ${styles.classicSplit}`}>
+        <ul className="bullet-list">
+          <li>Na replicação síncrona, o sucesso entregue ao cliente depende de uma condição remota. O primary só responde depois que a réplica participante alcança a fronteira configurada.</li>
+          <li>Se essa fronteira for o <strong>remote flush</strong>, a escrita confirmada existe de forma durável em outro failure domain. A perda do primary não elimina a única cópia do commit.</li>
+          <li>A proteção tem custo: rede, filas e armazenamento remoto entram na latência. Se a réplica necessária estiver indisponível, a escrita pode bloquear ou falhar em vez de confirmar sem garantia.</li>
+        </ul>
+        <section className={`visual-panel ${styles.classicVisual}`}>
+          <div className={styles.verticalPath}>
+            <section><Package /><div><b>Cliente</b><small>envia COMMIT</small></div></section>
+            <ArrowRight className={styles.verticalArrow} />
+            <section className={styles.bluePath}><Database /><div><b>Primary</b><small>persiste localmente</small></div></section>
+            <ArrowRight className={styles.verticalArrow} />
+            <section className={styles.amberPath}><Network /><div><b>Réplica</b><small>faz remote flush</small></div></section>
+            <ArrowRight className={styles.verticalArrow} />
+            <section><Check /><div><b>ACK</b><small>fronteira configurada foi alcançada</small></div></section>
+            <ArrowRight className={styles.verticalArrow} />
+            <section><UserRound /><div><b>Resposta</b><small>commit concluído</small></div></section>
+          </div>
+          <div className={styles.visualNote}><b>Pergunta correta</b><span>Qual réplica participa do ACK e qual etapa ela precisa concluir?</span></div>
+        </section>
       </div>
     </AcademicSlide>
   );
@@ -580,18 +733,24 @@ function SyncAckSlide() {
 function AsyncReplicationSlide() {
   return (
     <AcademicSlide title="Na replicação assíncrona, o cliente não espera a cópia remota" section="replicacao">
-      <div className={`${styles.body} ${styles.asyncBody}`}>
-        <section className={styles.asyncTimeline}>
-          <div><span>1</span><b>Primary persiste</b><small>commit local</small></div><ArrowRight />
-          <div><span>2</span><b>Cliente recebe sucesso</b><small>latência menor</small></div><ArrowRight />
-          <div><span>3</span><b>WAL é enviado</b><small>depois da resposta</small></div><ArrowRight />
-          <div><span>4</span><b>Réplica aplica</b><small>surge o lag</small></div>
+      <div className={`${styles.body} ${styles.classicSplit}`}>
+        <ul className="bullet-list">
+          <li>Na replicação assíncrona, o primary confirma depois da persistência local. O envio e a gravação remota acontecem fora do caminho crítico da resposta ao cliente.</li>
+          <li>Isso reduz a latência e permite continuar escrevendo mesmo quando a réplica está lenta. Em troca, existe uma janela em que o commit confirmado só existe no primary.</li>
+          <li>Se o primary falhar antes de o trecho final do WAL chegar à réplica promovida, dados já confirmados podem ser perdidos. O RPO depende do lag observado e do procedimento de failover.</li>
+        </ul>
+        <section className={`visual-panel ${styles.classicVisual}`}>
+          <div className={styles.verticalPath}>
+            <section><Database /><div><b>1. Primary persiste</b><small>commit local</small></div></section>
+            <ArrowRight className={styles.verticalArrow} />
+            <section className={styles.bluePath}><Check /><div><b>2. Cliente recebe sucesso</b><small>latência menor</small></div></section>
+            <ArrowRight className={styles.verticalArrow} />
+            <section className={styles.amberPath}><FileClock /><div><b>3. WAL é enviado</b><small>depois da resposta</small></div></section>
+            <ArrowRight className={styles.verticalArrow} />
+            <section><RefreshCcw /><div><b>4. Réplica aplica</b><small>surge o lag</small></div></section>
+          </div>
+          <div className={styles.visualNote}><TriangleAlert /><span>Entre a resposta e a aplicação remota existe uma janela de possível perda.</span></div>
         </section>
-        <div className={styles.asyncTradeoff}>
-          <section><Gauge /><div><b>Benefício</b><p>A escrita normal não depende da latência ou disponibilidade da réplica.</p></div></section>
-          <section><TriangleAlert /><div><b>Risco</b><p>Se o primary falhar antes da réplica receber o trecho final do WAL, commits já confirmados podem ser perdidos.</p></div></section>
-          <section><Scale /><div><b>Contrato</b><p>O RPO deixa de ser automaticamente zero e passa a depender do lag e do procedimento de failover.</p></div></section>
-        </div>
       </div>
     </AcademicSlide>
   );
@@ -600,17 +759,19 @@ function AsyncReplicationSlide() {
 function FailoverFencingSlide() {
   return (
     <AcademicSlide title="Failover seguro exige fencing" section="replicacao">
-      <div className={`${styles.body} ${styles.failoverBody}`}>
-        <section className={styles.splitBrainDiagram}>
-          <div className={styles.oldPrimary}><Database /><span>PRIMARY ANTIGO</span><b>continua aceitando escritas?</b></div>
-          <div className={styles.partition}><Split /><b>partição de rede</b></div>
-          <div className={styles.promotedReplica}><Database /><span>RÉPLICA PROMOVIDA</span><b>também aceita escritas</b></div>
-          <p>Duas autoridades produzem históricos incompatíveis: split-brain.</p>
-        </section>
-        <section className={styles.fencingDefinitions}>
-          <Definition term="Fencing">Mecanismo que corta a capacidade do primary antigo escrever, por exemplo desligando a VM, revogando storage ou removendo credenciais.</Definition>
-          <Definition term="Lease">Permissão temporária que precisa ser renovada. Sem renovação, o nó perde autoridade.</Definition>
-          <Definition term="Quorum">Decisão apoiada pela maioria dos membros, evitando que duas minorias independentes se considerem líderes.</Definition>
+      <div className={`${styles.body} ${styles.classicSplit}`}>
+        <ul className="bullet-list">
+          <li>Detectar que o primary não responde não prova que ele parou. Uma partição pode esconder o primary antigo da equipe enquanto ele continua aceitando escritas.</li>
+          <li>Promover a réplica sem bloquear a autoridade antiga cria dois primaries. Cada lado aceita operações e produz um histórico diferente, o chamado <strong>split-brain</strong>.</li>
+          <li>Fencing corta a capacidade do nó antigo escrever. Pode desligar a VM, revogar o volume ou remover credenciais. Leases e quorum ajudam a garantir que apenas uma autoridade permaneça válida.</li>
+        </ul>
+        <section className={`visual-panel ${styles.classicVisual} ${styles.failoverVisual}`}>
+          <div className={styles.failoverCompare}>
+            <section className={styles.oldPrimary}><Database /><span>PRIMARY ANTIGO</span><b>continua escrevendo?</b></section>
+            <div className={styles.partition}><Split /><b>partição</b></div>
+            <section className={styles.promotedReplica}><Database /><span>RÉPLICA PROMOVIDA</span><b>também escreve</b></section>
+          </div>
+          <div className={styles.visualNote}><ShieldCheck /><span>Fencing precisa acontecer antes de aceitar a réplica como única autoridade.</span></div>
         </section>
       </div>
     </AcademicSlide>
@@ -620,18 +781,21 @@ function FailoverFencingSlide() {
 function QuorumMultiAzSlide() {
   return (
     <AcademicSlide title="Quorum distribui autoridade entre zonas" section="replicacao">
-      <div className={`${styles.body} ${styles.quorumBody}`}>
-        <div className={styles.azGrid}>
-          <section><span>AZ A</span><Database /><b>Nó 1</b><small>voto</small></section>
-          <section><span>AZ B</span><Database /><b>Nó 2</b><small>voto</small></section>
-          <section><span>AZ C</span><Database /><b>Nó 3</b><small>voto</small></section>
-        </div>
-        <div className={styles.quorumEquation}><b>3 membros</b><span>maioria = 2</span><strong>uma AZ pode falhar</strong></div>
-        <div className={styles.quorumNotes}>
-          <Definition term="Por que número ímpar?">Três e quatro membros toleram a mesma quantidade de falhas para decisões por maioria: uma. O quarto aumenta custo sem aumentar essa tolerância.</Definition>
-          <Definition term="Limite">Quorum preserva uma única autoridade, mas não cria capacidade. As zonas restantes ainda precisam suportar carga e armazenamento.</Definition>
-          <Definition term="Latência">A confirmação precisa alcançar membros suficientes. Placement e distância entre zonas entram no caminho de escrita.</Definition>
-        </div>
+      <div className={`${styles.body} ${styles.classicSplit}`}>
+        <ul className="bullet-list">
+          <li>Quorum é uma regra de maioria. Com três membros, duas respostas bastam para confirmar uma entrada e escolher uma autoridade.</li>
+          <li>Distribuir os membros por três zonas faz com que a perda de uma zona ainda deixe dois votos. As cópias precisam estar em failure domains diferentes para que essa matemática corresponda a falhas independentes.</li>
+          <li>Quorum não cria capacidade nem elimina latência. As zonas restantes precisam absorver a carga, e a confirmação ainda precisa alcançar membros suficientes antes de responder.</li>
+        </ul>
+        <section className={`visual-panel ${styles.classicVisual} ${styles.quorumVisual}`}>
+          <div className={styles.azGrid}>
+            <section><span>AZ A</span><Database /><b>Nó 1</b><small>voto</small></section>
+            <section><span>AZ B</span><Database /><b>Nó 2</b><small>voto</small></section>
+            <section><span>AZ C</span><Database /><b>Nó 3</b><small>voto</small></section>
+          </div>
+          <div className={styles.quorumEquation}><b>3 membros</b><span>maioria = 2</span><strong>uma AZ pode falhar</strong></div>
+          <div className={styles.visualNote}><Scale /><span>Placement, capacidade e distância entre zonas fazem parte do quorum real.</span></div>
+        </section>
       </div>
     </AcademicSlide>
   );
@@ -640,13 +804,16 @@ function QuorumMultiAzSlide() {
 function RttSlide() {
   return (
     <AcademicSlide title="RTT e o custo físico da distância" section="distribuidos">
-      <div className={`${styles.body} ${styles.rttBody}`}>
-        <section className={styles.regionPair}><div><Globe2 /><span>REGIÃO A</span><b>São Paulo</b></div><div className={styles.rttLine}><ArrowRight /><span>RTT</span><ArrowRight /></div><div><Globe2 /><span>REGIÃO B</span><b>outra geografia</b></div></section>
-        <div className={styles.rttDefinitions}>
-          <Definition term="RTT">Round-trip time: tempo para uma mensagem ir até o destino e uma resposta voltar.</Definition>
-          <Definition term="Commit síncrono">Se uma região remota participa do ACK, pelo menos uma viagem de rede e o trabalho remoto entram na latência observada.</Definition>
-          <Definition term="Limite físico">Software pode reduzir filas e cópias, mas não remove distância, propagação e falhas de enlaces intermediários.</Definition>
-        </div>
+      <div className={`${styles.body} ${styles.classicSplit}`}>
+        <ul className="bullet-list">
+          <li>RTT é o tempo para uma mensagem ir até o destino e uma resposta voltar. Ele transforma distância física em latência observável pela aplicação.</li>
+          <li>Se uma região remota participa do ACK, pelo menos uma viagem de rede e o trabalho remoto entram no caminho crítico de cada escrita. Paralelismo reduz filas, mas não elimina a propagação.</li>
+          <li>Por isso, muitas arquiteturas confirmam dentro da região e replicam entre regiões de forma assíncrona. O desenho aceita RPO maior para não colocar a geografia inteira em cada commit.</li>
+        </ul>
+        <section className={`visual-panel ${styles.classicVisual}`}>
+          <section className={styles.regionPair}><div><Globe2 /><span>REGIÃO A</span><b>São Paulo</b></div><div className={styles.rttLine}><ArrowRight /><span>RTT</span><ArrowRight /></div><div><Globe2 /><span>REGIÃO B</span><b>outra geografia</b></div></section>
+          <div className={styles.visualNote}><b>Limite físico</b><span>Software pode reduzir filas e cópias, mas não remove distância, propagação ou falhas de enlaces.</span></div>
+        </section>
       </div>
     </AcademicSlide>
   );
@@ -655,10 +822,19 @@ function RttSlide() {
 function ActiveModesSlide() {
   return (
     <AcademicSlide title="Active-passive e active-active resolvem problemas diferentes" section="distribuidos">
-      <div className={`${styles.body} ${styles.activeModesBody}`}>
-        <section className={styles.modeCard}><header><RefreshCcw /><div><span>ACTIVE-PASSIVE</span><b>Uma região recebe escritas</b></div></header><ul><li>Autoridade simples no caminho normal</li><li>Failover precisa promover o destino e bloquear a origem</li><li>Capacidade de standby pode ser parcial</li><li>RTO depende de detecção, promoção, rede e clientes</li></ul></section>
-        <section className={`${styles.modeCard} ${styles.activeActiveCard}`}><header><Split /><div><span>ACTIVE-ACTIVE</span><b>Mais de uma região aceita operações</b></div></header><ul><li>Menor latência local para usuários distribuídos</li><li>Conflitos e invariantes precisam de tratamento explícito</li><li>Partições podem impedir algumas operações</li><li>Custo e complexidade aumentam significativamente</li></ul></section>
-        <div className={styles.modeRule}><Scale /><span>Active-active não é uma versão superior de active-passive. Ele é necessário apenas quando requisitos de latência, disponibilidade de escrita ou distribuição geográfica justificam a complexidade.</span></div>
+      <div className={`${styles.body} ${styles.classicSplit}`}>
+        <ul className="bullet-list">
+          <li>Em active-passive, uma região recebe as escritas e a outra mantém uma cópia pronta para promoção. A autoridade é simples no caminho normal, mas o failover precisa bloquear a origem antiga.</li>
+          <li>Em active-active, mais de uma região aceita operações. Usuários podem ter menor latência local, mas conflitos, invariantes e partições precisam de tratamento explícito por tipo de dado.</li>
+          <li>Active-active não é uma versão superior de active-passive. Só compensa quando latência ou disponibilidade regional justificam a complexidade de múltiplas autoridades.</li>
+        </ul>
+        <section className={`visual-panel ${styles.classicVisual} ${styles.modesVisual}`}>
+          <div className={styles.modeCompare}>
+            <section className={styles.modeCard}><header><RefreshCcw /><div><span>ACTIVE-PASSIVE</span><b>Uma região escreve</b></div></header><ul><li>autoridade simples</li><li>promover e bloquear origem</li><li>standby pode ser parcial</li></ul></section>
+            <section className={`${styles.modeCard} ${styles.activeActiveCard}`}><header><Split /><div><span>ACTIVE-ACTIVE</span><b>Mais de uma região escreve</b></div></header><ul><li>menor latência local</li><li>conflitos explícitos</li><li>maior complexidade</li></ul></section>
+          </div>
+          <div className={styles.visualNote}><Scale /><span>O modo depende do contrato de latência, disponibilidade e consistência.</span></div>
+        </section>
       </div>
     </AcademicSlide>
   );
@@ -673,9 +849,16 @@ function ConsistencyModelsSlide() {
   ];
   return (
     <AcademicSlide title="Modelos de consistência definem o que o cliente observa" section="distribuidos">
-      <div className={`${styles.body} ${styles.consistencyBody}`}>
-        <ConceptCards items={models} columns={4} />
-        <div className={styles.consistencyRule}><Database /><span>Consistência não é sinônimo de replicação. Duas cópias podem existir e ainda oferecer garantias muito diferentes para leituras concorrentes.</span></div>
+      <div className={`${styles.body} ${styles.classicSplit}`}>
+        <ul className="bullet-list">
+          <li>Consistência descreve o que uma leitura pode observar depois de uma escrita. Replicação apenas diz que existem cópias; não define qual versão cada cliente verá.</li>
+          <li>Consistência forte faz uma escrita confirmada aparecer para leituras posteriores. Read-your-writes garante esse comportamento para o próprio cliente; consistência causal preserva a ordem entre operações relacionadas.</li>
+          <li>Consistência eventual aceita divergência temporária e promete convergência quando novas escritas cessam. Ela pode reduzir coordenação, mas transfere parte da complexidade para a aplicação.</li>
+        </ul>
+        <section className={`visual-panel ${styles.classicVisual} ${styles.consistencyVisual}`}>
+          <ConceptCards items={models} columns={2} />
+          <div className={styles.visualNote}><Database /><span>Duas cópias podem existir e ainda oferecer garantias muito diferentes para leituras concorrentes.</span></div>
+        </section>
       </div>
     </AcademicSlide>
   );
@@ -684,18 +867,22 @@ function ConsistencyModelsSlide() {
 function RaftSlide() {
   return (
     <AcademicSlide title="Raft: consenso para escolher uma única autoridade" section="distribuidos">
-      <div className={`${styles.body} ${styles.raftBody}`}>
-        <section className={styles.raftCluster}>
-          <div className={styles.raftLeader}><Database /><span>LEADER</span><b>Termo 8</b><small>recebe comandos e replica o log</small></div>
-          <ArrowRight /><div className={styles.raftFollower}><Database /><span>FOLLOWER</span><b>Termo 8</b><small>confirma entradas</small></div>
-          <ArrowRight /><div className={styles.raftFollower}><Database /><span>FOLLOWER</span><b>Termo 8</b><small>confirma entradas</small></div>
+      <div className={`${styles.body} ${styles.classicSplit}`}>
+        <ul className="bullet-list">
+          <li>Raft resolve um problema específico: vários membros precisam concordar sobre uma única ordem de comandos, mesmo quando alguns falham ou ficam isolados.</li>
+          <li>Um leader recebe comandos e replica o log. Uma entrada só é comprometida depois de alcançar a maioria; então todos os membros aplicam a mesma sequência à máquina de estados.</li>
+          <li>Se o leader falha, os membros elegem outro em um termo maior. As regras de eleição impedem que um membro com histórico atrasado se torne autoridade e apague decisões já comprometidas.</li>
+        </ul>
+        <section className={`visual-panel ${styles.classicVisual} ${styles.raftVisual}`}>
+          <div className={styles.verticalPath}>
+            <section className={styles.bluePath}><Database /><div><b>LEADER</b><small>recebe comandos e replica o log</small></div></section>
+            <ArrowRight className={styles.verticalArrow} />
+            <section><Database /><div><b>FOLLOWER A</b><small>confirma entradas do termo 8</small></div></section>
+            <ArrowRight className={styles.verticalArrow} />
+            <section><Database /><div><b>FOLLOWER B</b><small>confirma entradas do termo 8</small></div></section>
+          </div>
+          <div className={styles.visualNote}><Check /><span>Maioria confirma; todos aplicam a mesma ordem.</span></div>
         </section>
-        <div className={styles.raftSteps}>
-          <section><span>1</span><b>Eleição</b><p>Se o leader deixa de responder, membros iniciam uma eleição em um termo maior.</p></section>
-          <section><span>2</span><b>Replicação</b><p>O leader ordena comandos em seu log e os envia aos followers.</p></section>
-          <section><span>3</span><b>Commit</b><p>Uma entrada fica comprometida quando alcança o quorum exigido pelo algoritmo.</p></section>
-          <section><span>4</span><b>Aplicação</b><p>Cada membro aplica entradas comprometidas na mesma ordem à máquina de estados.</p></section>
-        </div>
       </div>
     </AcademicSlide>
   );
@@ -704,13 +891,20 @@ function RaftSlide() {
 function CapSlide() {
   return (
     <AcademicSlide title="CAP só se aplica quando há partição" section="distribuidos">
-      <div className={`${styles.body} ${styles.capBody}`}>
-        <section className={styles.partitionScenario}><div><Globe2 /><b>Região A</b><small>continua saudável</small></div><div className={styles.brokenLink}><Split /><span>mensagens não atravessam</span></div><div><Globe2 /><b>Região B</b><small>continua saudável</small></div></section>
-        <div className={styles.capChoices}>
-          <section><Lock /><span>PRIORIZAR CONSISTÊNCIA</span><b>Recusar ou bloquear operações sem quorum</b><p>Evita duas autoridades, mas reduz disponibilidade durante a partição.</p></section>
-          <section><Zap /><span>PRIORIZAR DISPONIBILIDADE</span><b>Aceitar operações dos dois lados</b><p>Responde a todos, mas precisa admitir divergência e reconciliação posterior.</p></section>
-        </div>
-        <div className={styles.capRule}><TriangleAlert /><span>CAP não significa escolher duas letras para o sistema inteiro. A decisão aparece por operação e somente quando a comunicação necessária está particionada.</span></div>
+      <div className={`${styles.body} ${styles.classicSplit}`}>
+        <ul className="bullet-list">
+          <li>CAP descreve o comportamento durante uma partição de rede, quando dois grupos continuam vivos, mas não conseguem trocar as mensagens necessárias para coordenar.</li>
+          <li>Priorizar consistência significa recusar ou bloquear operações sem quorum. O sistema evita duas autoridades, mas fica indisponível para parte dos clientes naquele intervalo.</li>
+          <li>Priorizar disponibilidade significa aceitar operações dos dois lados. O sistema responde mais, mas precisa admitir divergência e reconciliar conflitos depois. A escolha pode variar por operação.</li>
+        </ul>
+        <section className={`visual-panel ${styles.classicVisual} ${styles.capVisual}`}>
+          <section className={styles.partitionScenario}><div><Globe2 /><b>Região A</b><small>continua saudável</small></div><div className={styles.brokenLink}><Split /><span>mensagens bloqueadas</span></div><div><Globe2 /><b>Região B</b><small>continua saudável</small></div></section>
+          <div className={styles.capChoices}>
+            <section><Lock /><span>CONSISTÊNCIA</span><b>bloquear sem quorum</b><p>evita duas autoridades</p></section>
+            <section><Zap /><span>DISPONIBILIDADE</span><b>aceitar dos dois lados</b><p>reconcilia depois</p></section>
+          </div>
+          <div className={styles.visualNote}><TriangleAlert /><span>CAP não é uma escolha global permanente; aparece quando a comunicação necessária está particionada.</span></div>
+        </section>
       </div>
     </AcademicSlide>
   );
@@ -719,14 +913,17 @@ function CapSlide() {
 function RpoRtoSlide() {
   return (
     <AcademicSlide title="RPO e RTO transformam risco em requisito" section="distribuidos">
-      <div className={`${styles.body} ${styles.rpoBody}`}>
-        <section className={styles.metricCard}><FileClock /><span>RPO</span><b>Quanto dado pode ser perdido?</b><p>Mede a distância aceitável entre o último estado recuperável e o instante da falha.</p><strong>Exemplo: RPO 5 min</strong></section>
-        <section className={styles.metricCard}><Clock3 /><span>RTO</span><b>Quanto tempo o serviço pode ficar indisponível?</b><p>Mede o prazo para detectar, decidir, recuperar dependências e voltar a atender.</p><strong>Exemplo: RTO 15 min</strong></section>
-        <div className={styles.rpoQuestions}>
-          <Definition term="RPO zero">Qual cópia remota precisa participar do ACK e como ela é protegida de corrupção ou exclusão?</Definition>
-          <Definition term="RTO baixo">Quais etapas são automáticas, quanto cada uma leva e com que frequência o failover é testado?</Definition>
-          <Definition term="Custo">Capacidade ociosa, replicação síncrona, automação e testes são parte do preço do contrato.</Definition>
-        </div>
+      <div className={`${styles.body} ${styles.classicSplit}`}>
+        <ul className="bullet-list">
+          <li><strong>RPO</strong> define quanto estado o negócio aceita perder. RPO de cinco minutos não significa que a falha será detectada em cinco minutos; significa que o estado recuperável pode estar até cinco minutos atrasado.</li>
+          <li><strong>RTO</strong> define quanto tempo o serviço pode ficar indisponível. Ele inclui detectar a falha, decidir, promover dados, recuperar dependências, atualizar rotas e validar readiness.</li>
+          <li>RPO baixo exige cópia remota e uma política de confirmação adequada. RTO baixo exige automação, capacidade pronta e testes frequentes. Os dois são contratos operacionais, não apenas campos de configuração.</li>
+        </ul>
+        <section className={`visual-panel ${styles.classicVisual} ${styles.rpoVisual}`}>
+          <section className={styles.metricCard}><FileClock /><span>RPO</span><b>quanto dado pode ser perdido?</b><p>distância entre o último estado recuperável e a falha</p><strong>Exemplo: RPO 5 min</strong></section>
+          <section className={styles.metricCard}><Clock3 /><span>RTO</span><b>quanto tempo pode ficar indisponível?</b><p>detectar, decidir, recuperar e voltar a atender</p><strong>Exemplo: RTO 15 min</strong></section>
+          <div className={styles.visualNote}><Scale /><span>Capacidade ociosa, replicação, automação e testes fazem parte do custo do contrato.</span></div>
+        </section>
       </div>
     </AcademicSlide>
   );
@@ -739,6 +936,7 @@ type ExamQuestion = {
   prompt: string;
   statements?: string[];
   alternatives: string[];
+  conceptNotes: string[];
   answer: string;
   answerLabel: string;
   reasoning: string[];
@@ -758,6 +956,13 @@ const examQuestions: ExamQuestion[] = [
       "Tarefa mais curta primeiro: propício para sistemas interativos.",
       "Round-robin: propício para sistemas de tempo real.",
       "Escalonamento por prioridades: propício para sistemas interativos.",
+    ],
+    conceptNotes: [
+      "FILO executa primeiro a tarefa que chegou por último; não garante prazo.",
+      "Rate Monotonic atribui prioridade fixa a tarefas periódicas de tempo real.",
+      "SJF escolhe a tarefa com menor duração estimada e reduz espera média.",
+      "Round-robin divide a CPU em fatias de tempo e favorece responsividade.",
+      "Prioridades permitem favorecer tarefas interativas e reduzir latência percebida.",
     ],
     answer: "E",
     answerLabel: "Prioridades em sistemas interativos",
@@ -781,6 +986,13 @@ const examQuestions: ExamQuestion[] = [
       "usa o sistema operacional e o sistema de arquivos do host para criar processos e armazenar arquivos.",
       "depende das abstrações de um sistema operacional subjacente para executar instruções privilegiadas.",
       "exige sistemas operacionais iguais no host e nas máquinas virtuais convidadas.",
+    ],
+    conceptNotes: [
+      "Descreve um hypervisor hospedado, ou tipo 2, que usa um sistema operacional host.",
+      "Tipo 1 é bare metal: o hypervisor controla o hardware diretamente.",
+      "Criar processos e usar arquivos do host é típico de containers ou virtualização hospedada.",
+      "Instruções privilegiadas mediadas pelo sistema operacional indicam um hypervisor tipo 2.",
+      "Guests podem usar sistemas operacionais diferentes entre si e do host.",
     ],
     answer: "B",
     answerLabel: "Execução bare metal",
@@ -806,6 +1018,13 @@ const examQuestions: ExamQuestion[] = [
       "IV. Em IaaS, o usuário controla sistemas operacionais, armazenamento e aplicações, mas não a infraestrutura física da nuvem.",
     ],
     alternatives: ["I e II.", "I e IV.", "II e III.", "I, III e IV.", "II, III e IV."],
+    conceptNotes: [
+      "Combina SaaS, responsabilidade do provedor, com a definição incorreta de elasticidade.",
+      "Combina SaaS e IaaS: o usuário não administra a infraestrutura física, mas controla a VM.",
+      "Combina elasticidade com uma afirmação restritiva sobre nuvem comunitária.",
+      "Combina SaaS, a afirmação restritiva sobre comunidade e IaaS.",
+      "Combina a definição incorreta de elasticidade, comunidade e IaaS.",
+    ],
     answer: "B",
     answerLabel: "I e IV",
     reasoning: [
@@ -829,6 +1048,13 @@ const examQuestions: ExamQuestion[] = [
       "Adicionar dispositivos para atender demanda temporária ou crescente está ligado à escalabilidade.",
       "Acesso concorrente a um recurso compartilhado é consequência da transparência.",
     ],
+    conceptNotes: [
+      "Sistemas distribuídos coordenam eventos sem depender de um relógio global perfeito.",
+      "Falhas parciais permitem que alguns nós continuem enquanto outro falha.",
+      "Middleware e protocolos permitem combinar componentes heterogêneos.",
+      "Escalabilidade é crescer em carga adicionando recursos ou capacidade.",
+      "Transparência oculta a distribuição; concorrência exige controle explícito.",
+    ],
     answer: "D",
     answerLabel: "Escalabilidade",
     reasoning: [
@@ -844,7 +1070,7 @@ const examQuestions: ExamQuestion[] = [
 
 function ExamQuestionSlide({ question }: { question: ExamQuestion }) {
   return (
-    <AcademicSlide title={`${question.source}: questão ${question.id}`} section="fechamento">
+    <AcademicSlide title={`${question.source}: questão ${question.id}`} section="fechamento" className={styles.examSlide}>
       <div className={`${styles.body} ${styles.questionBody}`}>
         <section className={styles.questionPrompt}>
           <span>{question.title}</span>
@@ -852,7 +1078,7 @@ function ExamQuestionSlide({ question }: { question: ExamQuestion }) {
           {question.statements && <div className={styles.statementList}>{question.statements.map((statement) => <p key={statement}>{statement}</p>)}</div>}
           <div className={styles.questionInstruction}><UserRound /><span>Escolha uma alternativa e prepare uma justificativa para discutir com a turma.</span></div>
         </section>
-        <div className={styles.alternatives}>{question.alternatives.map((alternative, index) => <div key={alternative}><b>{String.fromCharCode(65 + index)}</b><span>{alternative}</span></div>)}</div>
+        <div className={styles.alternatives}>{question.alternatives.map((alternative, index) => <div key={alternative}><b>{String.fromCharCode(65 + index)}</b><span>{alternative}</span><small className={styles.alternativeNote}>{question.conceptNotes[index]}</small></div>)}</div>
         <SourceNote>{question.note ?? `Fonte: ${question.source}, prova de Ciência da Computação. Enunciado condensado para projeção; resolução no próximo slide.`}</SourceNote>
       </div>
     </AcademicSlide>
@@ -861,7 +1087,7 @@ function ExamQuestionSlide({ question }: { question: ExamQuestion }) {
 
 function ExamResolutionSlide({ question }: { question: ExamQuestion }) {
   return (
-    <AcademicSlide title={`Resolução: ${question.title}`} section="fechamento">
+    <AcademicSlide title={`Resolução: ${question.title}`} section="fechamento" className={styles.examSlide}>
       <div className={`${styles.body} ${styles.resolutionBody}`}>
         <section className={styles.answerPanel}><span>GABARITO</span><strong>{question.answer}</strong><b>{question.answerLabel}</b></section>
         <div className={styles.reasoningList}>{question.reasoning.map((reason, index) => <section key={reason}><span>{index + 1}</span><p>{reason}</p></section>)}</div>
@@ -873,15 +1099,15 @@ function ExamResolutionSlide({ question }: { question: ExamQuestion }) {
 
 function DiscussionSlide() {
   return (
-    <AcademicSlide title="Roda de discussão: qual requisito deve ser renegociado?" section="fechamento">
+    <AcademicSlide title="Roda de discussão: qual requisito deve ser renegociado?" section="fechamento" className={styles.discussionSlide}>
       <div className={`${styles.body} ${styles.discussionBody}`}>
-        <section className={styles.discussionScenario}><span>CENÁRIO</span><h2>Uma fintech brasileira precisa sobreviver à perda completa de uma região.</h2><ul><li>95% das operações são leituras; 5% alteram saldo.</li><li>Meta comercial: RTO de 60 segundos e nenhuma transação perdida.</li><li>Escritas não podem ganhar mais de 80 ms no caminho normal.</li><li>O orçamento permite duas regiões, mas não capacidade plena duplicada.</li></ul></section>
+        <section className={styles.discussionScenario}><span>CENÁRIO</span><h2>Uma fintech brasileira precisa sobreviver à perda completa de uma região.</h2><p>O time precisa propor uma arquitetura que funcione no caminho normal e também tenha uma resposta defensável para uma partição. Não existe orçamento para satisfazer todos os requisitos ao mesmo tempo.</p><ul><li><strong>95%</strong><span>das operações são leituras; 5% alteram saldo.</span></li><li><strong>60 s</strong><span>de RTO e nenhuma transação perdida são a meta comercial.</span></li><li><strong>80 ms</strong><span>é o limite de latência adicional para escritas normais.</span></li><li><strong>2 regiões</strong><span>cabem no orçamento, mas não com capacidade plena duplicada.</span></li></ul></section>
         <div className={styles.discussionPositions}>
-          <section><ShieldCheck /><b>A. Active-passive síncrono</b><p>Prioriza RPO zero, mas adiciona latência remota e pode bloquear escritas durante partições.</p></section>
-          <section><RefreshCcw /><b>B. Active-passive assíncrono</b><p>Preserva latência local, mas admite perda potencial e exige recuperação bem testada.</p></section>
-          <section><Split /><b>C. Active-active seletivo</b><p>Distribui leituras e algumas operações, mas precisa declarar quais invariantes podem ser relaxadas.</p></section>
+          <section><ShieldCheck /><b>A. Active-passive síncrono</b><p>Escritas só confirmam depois da cópia remota durável. Protege RPO, mas adiciona RTT ao caminho normal, consome capacidade nas duas regiões e pode bloquear durante uma partição.</p></section>
+          <section><RefreshCcw /><b>B. Active-passive assíncrono</b><p>A região primária mantém a latência local e a réplica acompanha fora do caminho crítico. O failover é simples de explicar, mas commits recentes podem ser perdidos, e o RPO observado precisa ser medido e aceito pelo negócio.</p></section>
+          <section><Split /><b>C. Active-active seletivo</b><p>Distribui leituras e permite algumas operações em ambas as regiões. Reduz dependência de uma única escrita central, mas exige declarar quais invariantes de saldo nunca podem divergir e como conflitos serão resolvidos.</p></section>
         </div>
-        <div className={styles.discussionRules}><span><UserRound /> Formem três grupos e defendam uma opção.</span><span><Clock3 /> Dois minutos de preparação e um minuto de réplica.</span><span><Scale /> Toda defesa deve declarar RPO, RTO, latência, partições e custo.</span></div>
+        <div className={styles.discussionRules}><span><UserRound /> Formem três grupos; cada grupo escolhe uma arquitetura e declara as concessões.</span><span><Clock3 /> Dois minutos de preparação, um minuto de defesa e uma réplica.</span><span><Scale /> A resposta precisa cobrir RPO, RTO, latência, partições, capacidade e custo.</span></div>
         <p className={styles.discussionPrompt}>Os quatro requisitos não cabem juntos no orçamento e na física da rede. Qual deles vocês renegociariam primeiro, e por quê?</p>
       </div>
     </AcademicSlide>

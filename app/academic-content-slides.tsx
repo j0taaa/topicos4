@@ -30,7 +30,7 @@ const requirementCards: Array<{ icon: LucideIcon; title: string; text: string }>
   { icon: Layers3, title: "Fundamentos técnicos", text: "A narrativa conecta hardware, VMs, containers, Kubernetes, rede, replicação, consistência, consenso e recuperação." },
   { icon: Lock, title: "Tópico adicional", text: "MicroVMs mostram uma fronteira intermediária entre a densidade de containers e o isolamento de uma máquina virtual." },
   { icon: RadioTower, title: "Tecnologia atual", text: "A aposentadoria do Ingress-NGINX em 2026 motiva a migração para a Gateway API e novos contratos de rede no Kubernetes." },
-  { icon: FileClock, title: "Evolução científica", text: "Três artigos — 2011, 2020 e 2021 — mostram a evolução de compartilhamento de cluster, isolamento leve e provisionamento serverless." },
+  { icon: FileClock, title: "Evolução científica", text: "Três artigos, de 2011, 2020 e 2021, mostram a evolução de compartilhamento de cluster, isolamento leve e provisionamento serverless." },
   { icon: ListChecks, title: "Avaliação e debate", text: "Quatro questões do ENADE 2021 são respondidas pela turma e resolvidas passo a passo antes de uma roda de discussão." },
 ];
 
@@ -95,7 +95,7 @@ function MicroVmUseCasesSlide() {
           <section><span>Quando atrapalha</span><b>Workloads estáveis e controlados</b><p>Em serviços internos com baixo risco, containers comuns podem entregar melhor densidade e operação mais simples.</p></section>
           <section className={styles.impactCard}><span>Princípio</span><b>Isolamento é uma propriedade arquitetural</b><p>“Usar container” não define sozinho a fronteira. O runtime pode escolher processos, microVMs ou VMs completas conforme o risco.</p></section>
         </div>
-        <SourceNote>Referência conceitual: Firecracker — lightweight virtualization for serverless applications, NSDI 2020.</SourceNote>
+        <SourceNote>Referência conceitual: Firecracker, lightweight virtualization for serverless applications, NSDI 2020.</SourceNote>
       </div>
     </AcademicSlide>
   );
@@ -129,7 +129,7 @@ function ArticleTimelineSlide() {
 
 function ArticleSynthesisSlide() {
   return (
-    <AcademicSlide title="O que evoluiu — e o que permaneceu" section="kubernetes">
+    <AcademicSlide title="O que evoluiu e o que permaneceu" section="kubernetes">
       <div className={styles.synthesisBody}>
         <div className={styles.evolutionChain}>
           {papers.map(({ year, icon: Icon, contribution }, index) => (
@@ -165,7 +165,7 @@ function IngressRetirementSlide() {
           <section><span>O risco</span><b>“Ainda funciona” não significa “ainda é seguro”</b><p>Instalações existentes podem continuar processando tráfego, mas passam a acumular vulnerabilidades e incompatibilidades sem manutenção upstream.</p></section>
           <section className={styles.impactCard}><span>Impacto arquitetural</span><b>A migração não é apenas trocar um Pod</b><p>Annotations específicas precisam virar recursos e políticas explícitas; equipes devem revisar ownership, observabilidade e comportamento de rotas.</p></section>
         </div>
-        <SourceNote>Fonte: Kubernetes Blog e Kubernetes Security Response Committee — anúncios de novembro de 2025 a março de 2026.</SourceNote>
+        <SourceNote>Fonte: Kubernetes Blog e Kubernetes Security Response Committee, anúncios de novembro de 2025 a março de 2026.</SourceNote>
       </div>
     </AcademicSlide>
   );
@@ -185,7 +185,7 @@ function GatewayApiSlide() {
         <div className={styles.currentGrid}>
           <section><span>Separação de papéis</span><b>Infraestrutura e aplicação deixam de editar o mesmo objeto</b><p>GatewayClass, Gateway e Route distribuem responsabilidades e permitem políticas de acesso coerentes com RBAC.</p></section>
           <section><span>Migração</span><b>Ingress2Gateway ajuda, mas não decide semântica</b><p>A versão 1.0 da ferramenta converte recursos comuns; extensões e annotations exigem validação humana e testes de tráfego.</p></section>
-          <section className={styles.impactCard}><span>Lição</span><b>APIs de infraestrutura também envelhecem</b><p>Um contrato declarativo reduz operação manual, mas cria dependência de versão, implementação e governança — exatamente como qualquer outra API.</p></section>
+          <section className={styles.impactCard}><span>Lição</span><b>APIs de infraestrutura também envelhecem</b><p>Um contrato declarativo reduz operação manual, mas cria dependência de versão, implementação e governança, exatamente como qualquer outra API.</p></section>
         </div>
         <SourceNote>Fonte: Kubernetes Gateway API e anúncio oficial do Ingress2Gateway 1.0, março de 2026.</SourceNote>
       </div>

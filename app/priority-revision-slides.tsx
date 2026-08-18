@@ -605,9 +605,9 @@ function IngressRetirementSlide() {
     <AcademicSlide title="Tecnologia atual: Ingress-NGINX foi aposentado em 2026" section="rede">
       <div className={`${styles.body} ${styles.classicSplit}`}>
         <ul className="bullet-list">
-          <li>A aposentadoria do Ingress-NGINX não desliga automaticamente os controladores já instalados, mas encerra a manutenção upstream.</li>
+          <li>Ingress-NGINX é o controller mais usado para expor Services do cluster ao mundo externo: ele implementa o objeto Ingress, atuando como um proxy reverso baseado em NGINX que roteia tráfego HTTP/HTTPS para o Service correto conforme host e path.</li>
           <li>A partir desse ponto, novas vulnerabilidades, bugs e incompatibilidades deixam de ter uma correção oficial garantida. Um deployment existente pode continuar funcionando, mas passa a carregar um risco operacional crescente.</li>
-          <li>Migrar não é apenas trocar a palavra Ingress por Gateway. Annotations, defaults, TLS, timeouts e regras de rewrite podem carregar semântica específica do controller antigo. Recursos e tráfego precisam ser inventariados e testados antes da mudança.</li>
+          <li>A troca pelo Gateway API não é só mudar o nome: o objeto único do Ingress, cheio de annotations, é substituído por três papéis — GatewayClass, Gateway e HTTPRoute —, que separam infraestrutura e regras da aplicação. Annotations, TLS, timeouts e rewrites específicos do NGINX precisam ser reconstruídos como recursos explícitos e revalidados antes da migração.</li>
         </ul>
         <section className={`visual-panel ${styles.classicVisual} ${styles.retirementVisual}`}>
           <div className={styles.retirementDate}><TriangleAlert /><span>24 MAR 2026</span><b>Fim do suporte oficial</b></div>

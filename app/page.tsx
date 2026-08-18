@@ -77,7 +77,7 @@ export default function Home() {
 
   return <main className="presentation-lab">
     <header className="presentation-header">
-      <div><h1>{slides[0].title}</h1><p>{slides.length} slides · roteiro de 100 a 110 minutos · artigos, questões e discussão</p></div>
+      <div><h1>{slides[0].title}</h1><p>{slides.length} slides · artigos, questões e discussão</p></div>
       <div className="header-actions"><button onClick={() => setOverview(true)}><Grid3X3/>Visão geral</button><button onClick={present}><Expand/>Tela cheia</button></div>
     </header>
 
@@ -85,7 +85,7 @@ export default function Home() {
 
     <nav className="presentation-controls" aria-label="Controles da apresentação">
       <button onClick={backward} disabled={index === 0 && step === 0} aria-label="Voltar"><ChevronLeft/></button>
-      <div className="slide-status"><b>{index + 1} / {slides.length}</b><span>{current.title}</span><small>{current.duration} · {current.maxStep > 0 ? `diagrama ${step + 1} de ${current.maxStep + 1}` : "slide completo"}</small></div>
+      <div className="slide-status"><b>{index + 1} / {slides.length}</b><span>{current.title}</span>{current.maxStep > 0 && <small>{`diagrama ${step + 1} de ${current.maxStep + 1}`}</small>}</div>
       {current.maxStep > 0 && <button className="show-all" onClick={() => setStep(current.maxStep)} disabled={step === current.maxStep}><Eye/>Mostrar diagrama completo</button>}
       <button onClick={forward} disabled={index === slides.length - 1 && step === current.maxStep} aria-label="Avançar"><ChevronRight/></button>
     </nav>
@@ -93,6 +93,6 @@ export default function Home() {
     <nav className="section-nav" aria-label="Seções da apresentação">{sections.map((section) => <button key={section.key} onClick={() => goTo(section.start - 1)} className={current.section === section.key ? "active" : ""}><span>{section.label}</span><small>{section.start}-{section.end}</small></button>)}</nav>
     <footer className="presentation-note"><RotateCcw/><span>Use <b>←</b> e <b>→</b>. Apenas diagramas em que a ordem é didaticamente importante usam revelação progressiva.</span></footer>
 
-    {overview && <div className="overview-backdrop" role="dialog" aria-modal="true" aria-label="Visão geral dos slides"><section className="overview-panel"><header><div><h2>Visão geral</h2><p>Selecione um slide para navegar diretamente.</p></div><button onClick={() => setOverview(false)} aria-label="Fechar visão geral"><X/></button></header><div className="overview-grid">{sections.map((section) => <section key={section.key}><h3>{section.label}</h3>{slides.map((slide, slideIndex) => slide.section === section.key && <button key={`${slide.title}-${slideIndex}`} onClick={() => goTo(slideIndex)} className={slideIndex === index ? "active" : ""}><span>{slideIndex + 1}</span><b>{slide.title}</b><small>{slide.duration}</small></button>)}</section>)}</div></section></div>}
+    {overview && <div className="overview-backdrop" role="dialog" aria-modal="true" aria-label="Visão geral dos slides"><section className="overview-panel"><header><div><h2>Visão geral</h2><p>Selecione um slide para navegar diretamente.</p></div><button onClick={() => setOverview(false)} aria-label="Fechar visão geral"><X/></button></header><div className="overview-grid">{sections.map((section) => <section key={section.key}><h3>{section.label}</h3>{slides.map((slide, slideIndex) => slide.section === section.key && <button key={`${slide.title}-${slideIndex}`} onClick={() => goTo(slideIndex)} className={slideIndex === index ? "active" : ""}><span>{slideIndex + 1}</span><b>{slide.title}</b></button>)}</section>)}</div></section></div>}
   </main>;
 }
